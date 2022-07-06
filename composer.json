@@ -1,0 +1,38 @@
+{
+  "name":                                     "austral/entity-file-bundle",
+  "type":                                     "symfony-bundle",
+  "description":                              "File uploads, thumbnails and download for entity to Symfony. Compress file with squoosh-cli",
+  "keywords":                                 ["Austral", "File entity", "Files entities", "Uploads"],
+  "license":                                  "MIT",
+  "homepage":                                 "https://austral.dev",
+  "version":                                  "3.0",
+  "authors": [
+    {
+      "name":                                 "Matthieu Beurel",
+      "email":                                "matthieu@austral.dev",
+      "role":                                 "Developer"
+    }
+  ],
+  "require": {
+    "php":                                    "^7.4 || ^8.0",
+
+    "austral/tools-bundle":                   "^3.0",
+    "austral/entity-bundle":                  "^3.0",
+
+    "symfony/config":                         "^5.4",
+
+    "imagine/imagine":                        "0.6.*@dev"
+  },
+  "require-dev": {
+  },
+  "suggests": {
+    "austral/translate-entity-bundle":        "^3.0"
+  },
+  "config": {
+    "sort-packages":                          true
+  },
+  "autoload": {
+    "psr-4": { "Austral\\EntityFileBundle\\": "" }
+  },
+  "minimum-stability":                        "dev"
+}

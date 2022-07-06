@@ -1,0 +1,104 @@
+services:
+  _defaults:
+    autowire:       false
+    autoconfigure:  false
+    public:         true
+
+
+##### Command Compress Picture
+  austral.file.compress.command:
+    public:       false
+    class:        Austral\EntityFileBundle\Command\CompressCommand
+    tags:
+      - { name: console.command, command: "austral:file:compress" }
+
+##### Listener #####
+  austral.entity_file.doctrine.listener:
+    class:        Austral\EntityFileBundle\Listener\DoctrineListener
+    arguments:    [ "@austral.entity.mapping","@austral.entity_file.uploader" ]
+    tags:
+      - { name: doctrine.event_subscriber, connection: default }
+
+  austral.entity_file.entity_mapping.listener:
+    class:        Austral\EntityFileBundle\Listener\EntityMappingListener
+    arguments:
+      - "@service_container"
+      - "@austral.entity_file.uploads.config"
+      - "@austral.entity_file.cropper.config"
+      - "@austral.entity_file.image_size.config"
+    tags:
+      - { name: kernel.event_listener, event: "austral.event.entity.initialise.mapping", method: mapping }
+
+  austral.entity_file.entity_manager.listener:
+    class:        Austral\EntityFileBundle\Listener\EntityManagerListener
+    arguments:
+      - "@service_container"
+      - "@austral.entity.mapping"
+      - "@austral.entity_file.uploader"
+    tags:
+      - { name: kernel.event_listener, event: "austral.entity_manager.duplicate", method: duplicate }
+      - { name: kernel.event_listener, event: "austral.entity_manager.push.after", method: copyFile }
+
+
+##### Parameters
+  austral.entity_file.uploads.config:
+    class:        Austral\EntityFileBundle\Configuration\UploadsConfiguration
+    arguments:    ["%austral_entity_file.uploads%", "@austral.entity_file.cropper.config"]
+
+  austral.entity_file.cropper.config:
+    class:        Austral\EntityFileBundle\Configuration\CropperConfiguration
+    arguments:    ["%austral_entity_file.cropper%"]
+
+  austral.entity_file.image_size.config:
+    class:        Austral\EntityFileBundle\Configuration\ImageSizeConfiguration
+    arguments:    ["%austral_entity_file.image_size%"]
+
+  austral.entity_file.compression.config:
+    class:        Austral\EntityFileBundle\Configuration\CompressionConfiguration
+    arguments:    ["%austral_entity_file.compression%"]
+
+##### File
+  austral.entity_file.uploader:
+    class:        Austral\EntityFileBundle\File\Upload\FileUploader
+    arguments:
+      - "@request_stack"
+      - "@austral.entity.mapping"
+      - "@austral.entity_file.cropper"
+      - "@austral.entity_file.cropper.config"
+      - "@austral.entity_file.compression"
+
+  austral.entity_file.downloader:
+    class:        Austral\EntityFileBundle\File\Download\FileDownloader
+    arguments:    ["@service_container", "@austral.entity.mapping"]
+
+  austral.entity_file.image:
+    class:        Austral\EntityFileBundle\File\Image\Image
+    arguments:    [ \Imagine\Gd\Imagine, "@austral.entity_file.compression" ]
+
+  austral.entity_file.image.render:
+    class:        Austral\EntityFileBundle\File\Image\ImageRender
+    arguments:
+      - "@service_container"
+      - "@austral.entity.mapping"
+      - "@austral.entity_file.image"
+      - "@austral.entity_file.uploads.config"
+      - "@austral.entity_file.cropper"
+
+  austral.entity_file.link.generator:
+    class:        Austral\EntityFileBundle\File\Link\Generator
+    arguments:    ["@router", "@austral.entity.mapping"]
+
+  austral.entity_file.cropper:
+    class:        Austral\EntityFileBundle\File\Cropper\Cropper
+    arguments:    ["@austral.entity_file.image", "@austral.entity.mapping"]
+
+  austral.entity_file.compression:
+    class:        Austral\EntityFileBundle\File\Compression\Compression
+    arguments:    ["@austral.entity_file.compression.config"]
+
+##### Twig Extension
+  twig.extension.media:
+    class:        Austral\EntityFileBundle\TwigExtension\MediaTwig
+    arguments:    [ "@service_container", "@austral.entity.mapping" ]
+    tags:
+      - { name: twig.extension }

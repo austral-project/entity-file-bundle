@@ -1,0 +1,20 @@
+##### Thumbnail image
+austral_entity_file_thumbnail:
+  path:             /thumbnail/{entityKey}/{id}/{fieldname}/{type}/{mode}/{width}x{height}/{value}.{extension}
+  controller:       Austral\EntityFileBundle\Controller\FileController::thumbnail
+  defaults:
+    type:           "original"
+    width:          ""
+    height:         ""
+  requirements:
+    value:          ".*"
+    type:           ".+"
+    width:          ".*"
+    height:         ".*"
+
+##### Donwload file
+austral_entity_file_download:
+  path:             /download/{entityKey}/{id}/{fieldname}/{value}.{extension}
+  controller:       Austral\EntityFileBundle\Controller\FileController::download
+  requirements:
+    value:          ".*"

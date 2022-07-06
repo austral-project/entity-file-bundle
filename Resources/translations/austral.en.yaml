@@ -1,0 +1,81 @@
+file:
+  actions:
+    add:                            Add file
+    delete:                         Delete file
+    draggable:
+      active:                       Drag file here !
+  info:
+    uploads:
+      size:                         "Max file size : %size%"
+      mimeType:                     "Type file accepted <span class='value'>(%mimeType%)</span>"
+    title:                          "Original file parameters"
+    filename:                       "File name"
+    size:                           "Size"
+    mimeType:                       "Type"
+    imageSize:                      "Image dimension"
+    download:                       "Download original file"
+    toggle:
+      show:                         "View file detail"
+      hide:                         "Hide file detail"
+  errors:
+    maxSize:                        "The file is too large ({{ size }} {{ suffix }}). Allowed maximum size is {{ limit }} {{ suffix }}."
+    mimeTypes:                      "Please upload a valid file format"
+    maxSizeJs:                      "Error file is too large"
+    mimeTypesJs:                    "Error file format"
+    dimensionMinJs:                 "Error dimension is too min"
+    dimensionMaxJs:                 "Error dimension is too max"
+
+button:
+  edit:
+    file:                           Edit file
+
+fields:
+  image:
+    entitled:                       Image
+  file:
+    entitled:                       File
+  cropperData:
+    entitled:                       Cropper data
+  generateCropperByKey:
+    entitled:                       Generate cropper by key
+  deleteFiles:
+    entitled:                       Delete files
+
+cropper:
+  desktop:
+    name:                           Desktop
+  tablet:
+    name:                           Tablet
+  mobile:
+    name:                           Mobile
+
+
+configuration:
+  check:
+    uploads:
+      title:                                    Uploads configuration
+      description:                              Check configuration to uploads file for the Entity
+      fieldname:                                Fieldname
+      default_image:
+        title:                                  Default parameters for image
+      default_file:
+        title:                                  Default parameters for fiel
+      path:
+        uploads:
+          entitled:                             Upload path
+        thumbnail:
+          entitled:                             Thumbnail path
+
+      form:
+        fieldname:
+          entitled:                             "Fieldname : %keyname%"
+        size_max:
+          entitled:                             File size max
+        mime_types:
+          entitled:                             Mime types accepted
+          all:                                  Accepted all mime types
+        image:
+          size_min:
+            entitled:                           Min image size
+          size_max:
+            entitled:                           Max image size

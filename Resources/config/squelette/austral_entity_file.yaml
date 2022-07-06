@@ -1,0 +1,48 @@
+austral_entity_file:
+  compression:
+    command:                      ""
+    options:
+      webp:
+        quality:                  70
+      mozjpeg:
+        quality:                  70
+      oxipng:
+        level:                    1
+
+
+  cropper:
+    desktop:
+      name:                       "cropper.desktop.name"
+      picto:                      "austral-picto-monitor"
+      ratio:                      "16/9"
+    tablet:
+      name:                       "cropper.tablet.name"
+      picto:                      "austral-picto-pad"
+      ratio:                      "3/4"
+    mobile:
+      name:                       "cropper.mobile.name"
+      picto:                      "austral-picto-smartphone"
+      ratio:                      "1/2"
+
+  uploads:
+    default:
+      size:
+        max:            "1024k"
+      image:
+        width:
+          min:          ""
+          max:          ""
+        height:
+          min:          ""
+          max:          ""
+      cropper:          []
+      mimeTypes:
+        - 'image/jpg'
+        - 'image/jpeg'
+        - 'image/png'
+        - 'image/gif'
+        - 'image/svg'
+        - 'image/svg+xml'
+      errors:
+        maxSize:   "file.errors.maxSize"
+        mimeTypes: "file.errors.mimeTypes"

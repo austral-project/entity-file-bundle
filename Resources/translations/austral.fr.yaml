@@ -1,0 +1,78 @@
+file:
+  actions:
+    add:                            Ajouter un file
+    replace:                        Remplacer
+    delete:                         Supprimer
+    cancel:                         Annuler
+    crop:                           Croper
+    draggable:
+      active:                       Déposer le fichier ici !
+  info:
+    uploads:
+      size:                         "Taille du fichier maximum : %size%"
+      mimeType:                     "Fichier accepté <span class='value'>(%mimeType%)</span>"
+    title:                          "Parametres du fichier original"
+    filename:                       "Nom du fichier"
+    size:                           "Taille de fichier"
+    mimeType:                       "Type mime du fichier"
+    imageSize:                      "Dimension de l'image"
+    download:                       "Télécharger le fichier original"
+    toggle:
+      show:                         "Voir le detail"
+      hide:                         "Caché le detail"
+  errors:
+    maxSize:                        "Le fichier est trop lourd ({{ size }} {{ suffix }}). Le poids maximum accepté est de {{ limit }} {{ suffix }}."
+    mimeTypes:                      "Merci d'ajouter un format de fichier valide."
+    maxSizeJs:                      "Le fichier est trop lourd (__SIZE__). Le poids maximum accepté est de __LIMIT__."
+    mimeTypesJs:                    "Merci d'ajouter un format de fichier valide.. Format accepté __MIME_TYPE__."
+
+
+fields:
+  image:
+    entitled:                       Image
+  file:
+    entitled:                       Fichier
+  cropperData:
+    entitled:                       Données du recadrage
+  generateCropperByKey:
+    entitled:                       Génération du recadrage par clé
+  deleteFiles:
+    entitled:                       Supprimer les fichiers
+
+cropper:
+  desktop:
+    name:                           PC
+  tablet:
+    name:                           Tablette
+  mobile:
+    name:                           Mobile
+
+configuration:
+  check:
+    uploads:
+      title:                                    Configuration des téléchargements
+      description:                              Vérification de la configuration pour le téléchargement des fichiers des entités
+      fieldname:                                Nom de champ
+      default_image:
+        title:                                  Paramètres par défaut pour les images
+      default_file:
+        title:                                  Paramètres par défaut pour les fichiers
+      path:
+        uploads:
+          entitled:                             Chemin de téléchargement
+        thumbnail:
+          entitled:                             Chemin des miniatures
+
+      form:
+        fieldname:
+          entitled:                             "Fieldname : %keyname%"
+        size_max:
+          entitled:                             Taille de fichier maximale
+        mime_types:
+          entitled:                             Types MIME acceptés
+          all:                                  Accepte tous les types mime
+        image:
+          size_min:
+            entitled:                           Image taille minimum
+          size_max:
+            entitled:                           Image taille maximum
