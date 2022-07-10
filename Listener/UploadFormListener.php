@@ -294,6 +294,16 @@ class UploadFormListener
           return $object->getUploadFileByFieldname($field->getFieldname());
         });
 
+
+        $fieldDeleteAttr = array(
+          "autocomplete" => "off",
+          "data-delete-file" => ""
+        );
+        if(array_key_exists("data-popin-update-input", $field->getOptions()['attr']))
+        {
+          $fieldDeleteAttr["data-popin-update-input"] = $field->getOptions()['attr']["data-popin-update-input"]."-delete";
+        }
+
         $formFieldEvent->getFormMapper()->add(Field\SymfonyField::create("{$field->getFieldname()}DeleteFile", HiddenType::class, array(
           "setter"  =>  function(EntityFileInterface $object, $value) use($field) {
             $object->setDeleteFileByFieldname($field->getFieldname(), $value);
@@ -301,10 +311,7 @@ class UploadFormListener
           "getter"  =>  function(EntityFileInterface $object) use($field){
             return $object->getDeleteFileByFieldname($field->getFieldname());
           },
-          "attr"  =>  array(
-            "autocomplete" => "off",
-            "data-delete-file" => ""
-          )
+          "attr"  =>  $fieldDeleteAttr
         )));
 
         if($field->getCropper() || !$fieldMapping->uploadParameters->isRequired) {
