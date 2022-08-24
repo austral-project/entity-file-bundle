@@ -101,32 +101,7 @@ class UploadFormListener
   {
     if($formEvent->getFormMapper()->getObject() instanceof EntityFileInterface)
     {
-      $objects = array();
-      $data = $formEvent->getForm()->getData();
-      if($data instanceof Collection)
-      {
-        $objects = $data->toArray();
-      }
-      else
-      {
-        $objects[] = $data;
-      }
-
-      /** @var EntityFileInterface|EntityFileCropperTrait $object */
-      foreach($objects as $object)
-      {
-        $this->fileUploader->validateRequiredFiles($formEvent->getForm(), $object);
-      }
-    }
-  }
-
-  /**
-   * @param FormEvent $formEvent
-   */
-  public function uploads(FormEvent $formEvent)
-  {
-    try {
-      if($formEvent->getFormMapper()->getObject() instanceof EntityFileInterface)
+      if($formEvent->getForm())
       {
         $objects = array();
         $data = $formEvent->getForm()->getData();
@@ -142,7 +117,38 @@ class UploadFormListener
         /** @var EntityFileInterface|EntityFileCropperTrait $object */
         foreach($objects as $object)
         {
-          $this->fileUploader->uploadFiles($formEvent->getForm(), $object);
+          $this->fileUploader->validateRequiredFiles($formEvent->getForm(), $object);
+        }
+      }
+    }
+  }
+
+  /**
+   * @param FormEvent $formEvent
+   */
+  public function uploads(FormEvent $formEvent)
+  {
+    try {
+      if($formEvent->getFormMapper()->getObject() instanceof EntityFileInterface)
+      {
+        $objects = array();
+        if($formEvent->getForm())
+        {
+          $data = $formEvent->getForm()->getData();
+          if($data instanceof Collection)
+          {
+            $objects = $data->toArray();
+          }
+          else
+          {
+            $objects[] = $data;
+          }
+
+          /** @var EntityFileInterface|EntityFileCropperTrait $object */
+          foreach($objects as $object)
+          {
+            $this->fileUploader->uploadFiles($formEvent->getForm(), $object);
+          }
         }
       }
     } catch(Exception $e) {
