@@ -13,7 +13,7 @@ namespace Austral\EntityFileBundle\Listener;
 use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
 
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\EntityFileBundle\File\Upload\FileUploader;
 
@@ -82,14 +82,14 @@ class DoctrineListener implements EventSubscriber
   {
     $ea = $this->getEventAdapter($args);
     $object = $ea->getObject();
-    if(!$object instanceof EntityFileInterface)
+    if(!$object instanceof FileInterface)
     {
-      if(AustralTools::usedImplements(get_class($object), "Austral\EntityTranslateBundle\Entity\Interfaces\EntityTranslateChildInterface"))
+      if(AustralTools::usedImplements(get_class($object), "Austral\EntityBundle\Entity\Interfaces\TranslateChildInterface"))
       {
         $object = $object->getMaster();
       }
     }
-    if($object instanceof EntityFileInterface)
+    if($object instanceof FileInterface)
     {
       /** @var FieldFileMapping $fieldFileMapping */
       foreach($this->mapping->getFieldsMappingByClass($object->getClassnameForMapping(), FieldFileMapping::class) as $fieldFileMapping)

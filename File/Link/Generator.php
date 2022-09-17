@@ -11,9 +11,9 @@
 namespace Austral\EntityFileBundle\File\Link;
 
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
-use Austral\EntityTranslateBundle\Entity\Interfaces\EntityTranslateMasterInterface;
+use Austral\EntityBundle\Entity\Interfaces\TranslateMasterInterface;
 use Austral\ToolsBundle\AustralTools;
 
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -50,14 +50,14 @@ class Generator
   /**
    * Download Url initializations
    *
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param string $fieldname
    * @param array $params
    *
    * @return string|null
    * @throws \Exception
    */
-  public function download(EntityFileInterface $object, string $fieldname, array $params = array()): ?string
+  public function download(FileInterface $object, string $fieldname, array $params = array()): ?string
   {
     if($fieldFileMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
     {
@@ -71,7 +71,7 @@ class Generator
 
       if($this->urlGenerator->getRouteCollection()->get(AustralTools::getValueByKey($params, "urlPath", "austral_entity_file_download"))->getRequirement("_locale"))
       {
-        if($object instanceof EntityTranslateMasterInterface)
+        if($object instanceof TranslateMasterInterface)
         {
           $urlParameters["_locale"] = $object->getLanguageCurrent();
         }
@@ -87,7 +87,7 @@ class Generator
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param string $fieldname
    * @param string|null $mode
    * @param int|null $width
@@ -98,7 +98,7 @@ class Generator
    * @return string|null
    * @throws \Exception
    */
-  public function image(EntityFileInterface $object,
+  public function image(FileInterface $object,
     string $fieldname,
     ?string $type = "original",
     ?string $mode = "resize",
@@ -133,7 +133,7 @@ class Generator
 
       if($this->urlGenerator->getRouteCollection()->get(AustralTools::getValueByKey($params, "urlPath", "austral_entity_file_thumbnail"))->getRequirement("_locale"))
       {
-        if($object instanceof EntityTranslateMasterInterface)
+        if($object instanceof TranslateMasterInterface)
         {
           $urlParameters["_locale"] = $object->getLanguageCurrent();
         }
@@ -162,12 +162,12 @@ class Generator
 
   /**
    * @param FieldFileMapping $fieldFileMapping
-   * @param EntityFileInterface|null $object
+   * @param FileInterface|null $object
    *
    * @return string|null
    * @throws \Exception
    */
-  protected function getObjectFilePath(FieldFileMapping $fieldFileMapping, ?EntityFileInterface $object): ?string
+  protected function getObjectFilePath(FieldFileMapping $fieldFileMapping, ?FileInterface $object): ?string
   {
     return $object ? $fieldFileMapping->getObjectFilePath($object) : null;
   }

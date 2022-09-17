@@ -12,7 +12,7 @@ namespace Austral\EntityFileBundle\File\Image;
 
 use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 use Austral\EntityFileBundle\File\Cropper\Cropper;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
@@ -121,7 +121,7 @@ class ImageRender
     $object = null;
     if(!$value || !$extension)
     {
-      /** @var EntityFileInterface $object */
+      /** @var FileInterface $object */
       if($object = $this->mapping->getObject($entityKey, $id))
       {
         $value = $value ? : $fieldFileMapping->getFilenameWithoutExtension($object);

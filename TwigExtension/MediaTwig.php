@@ -11,7 +11,7 @@
 namespace Austral\EntityFileBundle\TwigExtension;
 
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 use Austral\EntityFileBundle\Entity\Traits\EntityFileCropperTrait;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
@@ -92,13 +92,13 @@ class MediaTwig extends AbstractExtension
   /**
    * Download Url initializations
    *
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param string $fieldname
    * @param array $params
    *
    * @return string|null
    */
-  public function download(EntityFileInterface $object, string $fieldname, array $params = array()): ?string
+  public function download(FileInterface $object, string $fieldname, array $params = array()): ?string
   {
     return $this->container->get('austral.entity_file.link.generator')->download($object, $fieldname, $params);
   }
@@ -106,7 +106,7 @@ class MediaTwig extends AbstractExtension
   /**
    * Download Url initializations
    *
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param string $fieldname
    * @param string|null $mode
    * @param int|null $width
@@ -116,32 +116,32 @@ class MediaTwig extends AbstractExtension
    *
    * @return string|null
    */
-  public function image(EntityFileInterface $object, string $fieldname, ?string $type = "original", ?string $mode = "resize", int $width = null, int $height = null, array $params = array()): ?string
+  public function image(FileInterface $object, string $fieldname, ?string $type = "original", ?string $mode = "resize", int $width = null, int $height = null, array $params = array()): ?string
   {
     return $this->container->get('austral.entity_file.link.generator')->image($object, $fieldname, $type, $mode, $width, $height, $params);
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param string $fieldname
    *
    * @return bool
    * @throws \Exception
    */
-  public function fileExist(EntityFileInterface $object, string $fieldname): bool
+  public function fileExist(FileInterface $object, string $fieldname): bool
   {
     return (bool)$this->getFilePath($object, $fieldname);
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param string $fieldname
    * @param bool $humanize
    *
    * @return false|int|string
    * @throws \Exception
    */
-  public function fileSize(EntityFileInterface $object, string $fieldname, bool $humanize = false)
+  public function fileSize(FileInterface $object, string $fieldname, bool $humanize = false)
   {
     if($filePath = $this->getFilePath($object, $fieldname))
     {
@@ -151,13 +151,13 @@ class MediaTwig extends AbstractExtension
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param string $fieldname
    *
    * @return string|null
    * @throws \Exception
    */
-  public function fileMimeType(EntityFileInterface $object, string $fieldname): ?string
+  public function fileMimeType(FileInterface $object, string $fieldname): ?string
   {
     if($filePath = $this->getFilePath($object, $fieldname))
     {
@@ -167,13 +167,13 @@ class MediaTwig extends AbstractExtension
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param string $fieldname
    *
    * @return bool
    * @throws \Exception
    */
-  public function isImage(EntityFileInterface $object, string $fieldname): bool
+  public function isImage(FileInterface $object, string $fieldname): bool
   {
     if($filePath = $this->getFilePath($object, $fieldname))
     {
@@ -183,14 +183,14 @@ class MediaTwig extends AbstractExtension
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param string $fieldname
    * @param bool $returnArray
    *
    * @return array|string|null
    * @throws \Exception
    */
-  public function imageSize(EntityFileInterface $object, string $fieldname, bool $returnArray = true)
+  public function imageSize(FileInterface $object, string $fieldname, bool $returnArray = true)
   {
     if($filePath = $this->getFilePath($object, $fieldname))
     {
@@ -200,13 +200,13 @@ class MediaTwig extends AbstractExtension
   }
 
   /**
-   * @param EntityFileInterface|null $object
+   * @param FileInterface|null $object
    * @param string $fieldname
    *
    * @return string|null
    * @throws \Exception
    */
-  protected function getFilePath(?EntityFileInterface $object, string $fieldname): ?string
+  protected function getFilePath(?FileInterface $object, string $fieldname): ?string
   {
     /** @var FieldFileMapping $fieldMapping */
     if($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
@@ -218,14 +218,14 @@ class MediaTwig extends AbstractExtension
 
 
   /**
-   * @param EntityFileInterface|EntityFileCropperTrait|null $object
+   * @param FileInterface|EntityFileCropperTrait|null $object
    * @param string $fieldname
    * @param string|null $cropperKey
    *
    * @return float|null
    * @throws \Exception
    */
-  public function imageRatio(?EntityFileInterface $object, string $fieldname, string $cropperKey = null): ?float
+  public function imageRatio(?FileInterface $object, string $fieldname, string $cropperKey = null): ?float
   {
     $ratio = null;
     if($imageSizes = $this->imageSize($object, $fieldname, true))
@@ -247,13 +247,13 @@ class MediaTwig extends AbstractExtension
   }
 
   /**
-   * @param EntityFileInterface|null $object
+   * @param FileInterface|null $object
    * @param string $fieldname
    *
    * @return array
    * @throws \Exception
    */
-  public function parameters(?EntityFileInterface $object, string $fieldname): array
+  public function parameters(?FileInterface $object, string $fieldname): array
   {
     $parameters = array(
       "file"          =>  array(

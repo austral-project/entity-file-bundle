@@ -14,7 +14,7 @@ use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\Annotation\Cropper;
 use Austral\EntityFileBundle\Configuration\CropperConfiguration;
 use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 use Austral\EntityFileBundle\Entity\Traits\EntityFileCropperTrait;
 use Austral\EntityFileBundle\Exception\FormUploadException;
 use Austral\EntityFileBundle\File\Link\Generator;
@@ -29,6 +29,7 @@ use Austral\FormBundle\Field\UploadField;
 use Austral\ToolsBundle\AustralTools;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
+use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints as Constraints;
@@ -99,7 +100,7 @@ class UploadFormListener
    */
   public function validate(FormEvent $formEvent)
   {
-    if($formEvent->getFormMapper()->getObject() instanceof EntityFileInterface)
+    if($formEvent->getFormMapper()->getObject() instanceof FileInterface)
     {
       if($formEvent->getForm())
       {
@@ -113,12 +114,30 @@ class UploadFormListener
         {
           $objects[] = $data;
         }
+        $this->validateObjects($formEvent->getForm(), $objects);
+      }
+    }
+  }
 
-        /** @var EntityFileInterface|EntityFileCropperTrait $object */
-        foreach($objects as $object)
-        {
-          $this->fileUploader->validateRequiredFiles($formEvent->getForm(), $object);
-        }
+  /**
+   * @param FormInterface $form
+   * @param $objects
+   *
+   * @return void
+   * @throws Exception
+   */
+  protected function validateObjects(FormInterface $form, $objects)
+  {
+    /** @var FileInterface|EntityFileCropperTrait $object */
+    foreach($objects as $object)
+    {
+      if($object instanceof FileInterface)
+      {
+        $this->fileUploader->validateRequiredFiles($form, $object);
+      }
+      elseif(is_array($object))
+      {
+        $this->validateObjects($form, $object);
       }
     }
   }
@@ -129,7 +148,7 @@ class UploadFormListener
   public function uploads(FormEvent $formEvent)
   {
     try {
-      if($formEvent->getFormMapper()->getObject() instanceof EntityFileInterface)
+      if($formEvent->getFormMapper()->getObject() instanceof FileInterface)
       {
         $objects = array();
         if($formEvent->getForm())
@@ -143,12 +162,7 @@ class UploadFormListener
           {
             $objects[] = $data;
           }
-
-          /** @var EntityFileInterface|EntityFileCropperTrait $object */
-          foreach($objects as $object)
-          {
-            $this->fileUploader->uploadFiles($formEvent->getForm(), $object);
-          }
+          $this->uploadsObjects($formEvent->getForm(), $objects);
         }
       }
     } catch(Exception $e) {
@@ -156,6 +170,33 @@ class UploadFormListener
       throw new FormUploadException($e->getMessage());
     }
   }
+
+
+
+  /**
+   * @param FormInterface $form
+   * @param $objects
+   *
+   * @return void
+   * @throws Exception
+   */
+  protected function uploadsObjects(FormInterface $form, $objects)
+  {
+    /** @var FileInterface|EntityFileCropperTrait $object */
+    foreach($objects as $object)
+    {
+      if($object instanceof FileInterface)
+      {
+        $this->fileUploader->uploadFiles($form, $object);
+      }
+      elseif(is_array($object))
+      {
+        $this->uploadsObjects($form, $object);
+      }
+    }
+  }
+
+
 
   /**
    * @param FormEvent $formEvent
@@ -204,7 +245,7 @@ class UploadFormListener
   public function fieldConfiguration(FormFieldEvent $formFieldEvent)
   {
     $object = $formFieldEvent->getFormMapper()->getObject();
-    if($formFieldEvent->getField() instanceof UploadField && $object instanceof EntityFileInterface)
+    if($formFieldEvent->getField() instanceof UploadField && $object instanceof FileInterface)
     {
       if($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $formFieldEvent->getField()->getFieldname()))
       {
@@ -293,10 +334,10 @@ class UploadFormListener
         }
         $field->setRequired(false);
 
-        $field->addOption("setter", function(EntityFileInterface $object, ?UploadedFile $uploadFile = null) use ($field){
+        $field->addOption("setter", function(FileInterface $object, ?UploadedFile $uploadFile = null) use ($field){
           $object->setUploadFileByFieldname($field->getFieldname(), $uploadFile);
         });
-        $field->addOption("getter", function(EntityFileInterface $object) use ($field){
+        $field->addOption("getter", function(FileInterface $object) use ($field){
           return $object->getUploadFileByFieldname($field->getFieldname());
         });
 
@@ -311,10 +352,10 @@ class UploadFormListener
         }
 
         $formFieldEvent->getFormMapper()->add(Field\SymfonyField::create("{$field->getFieldname()}DeleteFile", HiddenType::class, array(
-          "setter"  =>  function(EntityFileInterface $object, $value) use($field) {
+          "setter"  =>  function(FileInterface $object, $value) use($field) {
             $object->setDeleteFileByFieldname($field->getFieldname(), $value);
           },
-          "getter"  =>  function(EntityFileInterface $object) use($field){
+          "getter"  =>  function(FileInterface $object) use($field){
             return $object->getDeleteFileByFieldname($field->getFieldname());
           },
           "attr"  =>  $fieldDeleteAttr

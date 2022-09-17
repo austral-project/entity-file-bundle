@@ -12,7 +12,7 @@ namespace Austral\EntityFileBundle\File\Mapping;
 
 use Austral\EntityBundle\Mapping\FieldMapping;
 use Austral\EntityFileBundle\Annotation as AustralFile;
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 use Austral\ToolsBundle\AustralTools;
 
 /**
@@ -69,26 +69,26 @@ final Class FieldFileMapping extends FieldMapping
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param bool $reel
    * @param null $default
    *
    * @return string|null
    * @throws \Exception
    */
-  protected function getEntityFileValue(EntityFileInterface $object, bool $reel = true, $default = null): ?string
+  protected function getEntityFileValue(FileInterface $object, bool $reel = true, $default = null): ?string
   {
     $value = $object->getValueByFieldname($reel ? $this->uploadParameters->keyname : ($this->uploadParameters->virtualnameField ?? $this->uploadParameters->keyname));
     return $value ?: $default;
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    *
    * @return string|null
    * @throws \Exception
    */
-  public function getObjectFilePath(EntityFileInterface $object): ?string
+  public function getObjectFilePath(FileInterface $object): ?string
   {
     $filePath = null;
     if(($value = $this->getEntityFileValue($object, $this->getFieldname())) && ($pathDir = $this->getFilePathDir()))
@@ -113,13 +113,13 @@ final Class FieldFileMapping extends FieldMapping
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param bool $reel
    *
    * @return ?string
    * @throws \Exception
    */
-  public function getFilename(EntityFileInterface $object, bool $reel = false): ?string
+  public function getFilename(FileInterface $object, bool $reel = false): ?string
   {
     if(!$reel)
     {
@@ -145,23 +145,23 @@ final Class FieldFileMapping extends FieldMapping
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    *
    * @return string|null
    * @throws \Exception
    */
-  public function getFilenameWithoutExtension(EntityFileInterface $object): ?string
+  public function getFilenameWithoutExtension(FileInterface $object): ?string
   {
     return pathinfo($this->getFilename($object), PATHINFO_FILENAME);
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    *
    * @return string|null
    * @throws \Exception
    */
-  public function getFilenameExtension(EntityFileInterface $object): ?string
+  public function getFilenameExtension(FileInterface $object): ?string
   {
     return pathinfo($this->getEntityFileValue($object), PATHINFO_EXTENSION);
   }
@@ -177,12 +177,12 @@ final Class FieldFileMapping extends FieldMapping
   }
 
   /**
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    *
    * @return array
    * @throws \Exception
    */
-  public function getCropperData(EntityFileInterface $object): array
+  public function getCropperData(FileInterface $object): array
   {
     $value = $object->getValueByFieldname("cropperData");
     return $value ?: array();

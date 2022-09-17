@@ -13,10 +13,10 @@ namespace Austral\EntityFileBundle\Listener;
 
 use Austral\EntityBundle\Event\EntityManagerEvent;
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\EntityFileBundle\File\Upload\FileUploader;
-use Austral\EntityTranslateBundle\Entity\Interfaces\EntityTranslateChildInterface;
+use Austral\EntityBundle\Entity\Interfaces\TranslateChildInterface;
 use Austral\ToolsBundle\AustralTools;
 use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -61,6 +61,8 @@ class EntityManagerListener
 
   /**
    * @param EntityManagerEvent $entityManagerEvent
+   *
+   * @throws Exception
    */
   public function duplicate(EntityManagerEvent $entityManagerEvent)
   {
@@ -69,6 +71,8 @@ class EntityManagerListener
 
   /**
    * @param EntityManagerEvent $entityManagerEvent
+   *
+   * @throws Exception
    */
   public function copyFile(EntityManagerEvent $entityManagerEvent)
   {
@@ -85,7 +89,7 @@ class EntityManagerListener
   protected function copyFilenameOrFile(EntityManagerEvent $entityManagerEvent, string $type)
   {
 
-    if(AustralTools::usedImplements(get_class($entityManagerEvent->getObject()), EntityTranslateChildInterface::class))
+    if(AustralTools::usedImplements(get_class($entityManagerEvent->getObject()), TranslateChildInterface::class))
     {
       $objectMaster = $entityManagerEvent->getObject()->getMaster();
     }
@@ -94,16 +98,16 @@ class EntityManagerListener
       $objectMaster = $entityManagerEvent->getObject();
     }
 
-    if(AustralTools::usedImplements(get_class($objectMaster), EntityFileInterface::class))
+    if(AustralTools::usedImplements(get_class($objectMaster), FileInterface::class))
     {
       /** @var FieldFileMapping $fieldFileMapping */
       foreach($this->mapping->getFieldsMappingByClass($objectMaster->getClassnameForMapping(), FieldFileMapping::class) as $fieldFileMapping)
       {
 
-        /** @var EntityFileInterface $sourceObject */
+        /** @var FileInterface $sourceObject */
         $sourceObject = $entityManagerEvent->getSourceObject();
 
-        /** @var EntityFileInterface $destinationObject */
+        /** @var FileInterface $destinationObject */
         $destinationObject = $entityManagerEvent->getObject();
 
         if($sourceObject && $destinationObject)

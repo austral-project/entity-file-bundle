@@ -11,7 +11,7 @@
 namespace Austral\EntityFileBundle\File\Cropper;
 
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 use Austral\EntityFileBundle\Entity\Traits\EntityFileCropperTrait;
 use Austral\EntityFileBundle\File\Image\Image;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
@@ -45,7 +45,7 @@ class Cropper
   }
 
   /**
-   * @param EntityFileInterface|EntityFileCropperTrait $object
+   * @param FileInterface|EntityFileCropperTrait $object
    * @param string $fieldname
    * @param string $cropperKey
    * @param array $cropperData
@@ -53,7 +53,7 @@ class Cropper
    * @return Cropper
    * @throws \Exception
    */
-  public function crop(EntityFileInterface $object, string $fieldname, string $cropperKey, array $cropperData = array()): Cropper
+  public function crop(FileInterface $object, string $fieldname, string $cropperKey, array $cropperData = array()): Cropper
   {
     if($fieldFileMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
     {

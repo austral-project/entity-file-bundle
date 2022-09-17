@@ -9,7 +9,7 @@
  */
 namespace Austral\EntityFileBundle\Entity\Traits;
 
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 use Austral\ToolsBundle\AustralTools;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -50,9 +50,9 @@ trait EntityFileTrait
    * @param string $fieldname
    * @param UploadedFile|null $uploadedFile
    *
-   * @return EntityFileInterface
+   * @return FileInterface
    */
-  public function setUploadFileByFieldname(string $fieldname, ?UploadedFile $uploadedFile = null): EntityFileInterface
+  public function setUploadFileByFieldname(string $fieldname, ?UploadedFile $uploadedFile = null): FileInterface
   {
     $this->uploadFiles[$fieldname] = $uploadedFile;
     return $this;
@@ -82,9 +82,9 @@ trait EntityFileTrait
    * @param string $fieldname
    * @param $value
    *
-   * @return EntityFileInterface
+   * @return FileInterface
    */
-  public function setDeleteFileByFieldname(string $fieldname, $value): EntityFileInterface
+  public function setDeleteFileByFieldname(string $fieldname, $value): FileInterface
   {
     $this->deleteFiles[$fieldname] = $value;
     return $this;
@@ -101,9 +101,9 @@ trait EntityFileTrait
   /**
    * @param $deleteFiles
    *
-   * @return EntityFileInterface
+   * @return FileInterface
    */
-  public function setDeleteFiles($deleteFiles): EntityFileInterface
+  public function setDeleteFiles($deleteFiles): FileInterface
   {
     $this->deleteFiles = $deleteFiles;
     return $this;

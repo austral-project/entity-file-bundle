@@ -13,7 +13,7 @@ namespace Austral\EntityFileBundle\File\Upload;
 use Austral\EntityBundle\Entity\EntityInterface;
 use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\Configuration\CropperConfiguration;
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 
 use Austral\EntityFileBundle\File\Compression\Compression;
 use Austral\EntityFileBundle\File\Cropper\Cropper;
@@ -100,12 +100,12 @@ Class FileUploader
 
   /**
    * @param FormInterface $form
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    *
    * @return bool
    * @throws Exception
    */
-  public function validateRequiredFiles(FormInterface $form, EntityFileInterface $object): bool
+  public function validateRequiredFiles(FormInterface $form, FileInterface $object): bool
   {
     $uploadedFiles = $object->getUploadFiles();
     $requiredFileSuccess = true;
@@ -130,12 +130,12 @@ Class FileUploader
 
   /**
    * @param FormInterface $form
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    *
    * @return $this
    * @throws Exception
    */
-  public function uploadFiles(FormInterface $form, EntityFileInterface $object): FileUploader
+  public function uploadFiles(FormInterface $form, FileInterface $object): FileUploader
   {
     try {
 
@@ -185,8 +185,8 @@ Class FileUploader
 
   /**
    * @param FieldFileMapping $fieldFileMapping
-   * @param EntityFileInterface|EntityInterface $objectSource
-   * @param EntityFileInterface|EntityInterface $objectDestination
+   * @param FileInterface|EntityInterface $objectSource
+   * @param FileInterface|EntityInterface $objectDestination
    *
    * @return $this
    * @throws Exception
@@ -207,8 +207,8 @@ Class FileUploader
 
   /**
    * @param FieldFileMapping $fieldFileMapping
-   * @param EntityFileInterface|EntityInterface $objectSource
-   * @param EntityFileInterface|EntityInterface $objectDestination
+   * @param FileInterface|EntityInterface $objectSource
+   * @param FileInterface|EntityInterface $objectDestination
    *
    * @return FileUploader
    * @throws Exception
@@ -241,13 +241,13 @@ Class FileUploader
 
   /**
    * @param FieldFileMapping $fieldFileMapping
-   * @param EntityFileInterface|EntityInterface $object
+   * @param FileInterface|EntityInterface $object
    * @param UploadedFile $uploadedFile
    *
    * @return $this
    * @throws Exception
    */
-  public function uploadFile(FieldFileMapping $fieldFileMapping, EntityFileInterface $object, UploadedFile $uploadedFile): FileUploader
+  public function uploadFile(FieldFileMapping $fieldFileMapping, FileInterface $object, UploadedFile $uploadedFile): FileUploader
   {
     $uploadsPath = AustralTools::join(
       $fieldFileMapping->path->upload,
@@ -272,13 +272,13 @@ Class FileUploader
 
   /**
    * @param FieldFileMapping $fieldFileMapping
-   * @param EntityFileInterface|EntityInterface $object
+   * @param FileInterface|EntityInterface $object
    * @param string|null $uploadsPath
    *
    * @return $this
    * @throws Exception
    */
-  public function deleteFileByFieldname(FieldFileMapping $fieldFileMapping, EntityFileInterface $object, string $uploadsPath = null): FileUploader
+  public function deleteFileByFieldname(FieldFileMapping $fieldFileMapping, FileInterface $object, string $uploadsPath = null): FileUploader
   {
     if(!$uploadsPath)
     {
@@ -326,12 +326,12 @@ Class FileUploader
 
   /**
    * @param FieldFileMapping $fieldFileMapping
-   * @param EntityFileInterface $object
+   * @param FileInterface $object
    * @param string|null $subDir
    *
    * @return $this
    */
-  public function deleteThumbnails(FieldFileMapping $fieldFileMapping, EntityFileInterface $object, string $subDir = null): FileUploader
+  public function deleteThumbnails(FieldFileMapping $fieldFileMapping, FileInterface $object, string $subDir = null): FileUploader
   {
     $thumbnailPath = AustralTools::join(
       $fieldFileMapping->path->thumbnail,

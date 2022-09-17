@@ -12,7 +12,7 @@ namespace Austral\EntityFileBundle\File\Download;
 
 
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityFileBundle\Entity\Interfaces\EntityFileInterface;
+use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -66,7 +66,7 @@ class FileDownloader
    */
   public function init(string $entityKey, string $fieldname, string $id): FileDownloader
   {
-    /** @var EntityFileInterface $object */
+    /** @var FileInterface $object */
     $object = $this->mapping->getObject($entityKey, $id);
     /** @var FieldFileMapping $fieldFieldMapping */
     if($fieldFieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))

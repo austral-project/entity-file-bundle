@@ -1,6 +1,10 @@
 Changelog
 =========
 
+### Version 3.1.0 (2022-09-17)
+* Changed the Entities Interfaces used
+* Fix to upload files if multi objects
+
 ### Version 3.0.0 (2021-02-10)
 * Created new repository and new branch in to Github
 * Changed the project License to the MIT
