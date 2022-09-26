@@ -260,9 +260,9 @@ Class FileUploader
       $uploadsPath,
       $filename
     );
-    if(AustralTools::isImage($filename))
+    $filePath = AustralTools::join($uploadsPath, $filename);
+    if(AustralTools::isImage($filename) && AustralTools::extension($filePath) != "svg")
     {
-      $filePath = AustralTools::join($uploadsPath, $filename);
       $this->image->open($filePath)->autoRotate()->save($filePath, array("webp"));
     }
     $this->deleteFileByFieldname($fieldFileMapping, $object, $uploadsPath)->deleteThumbnails($fieldFileMapping, $object);

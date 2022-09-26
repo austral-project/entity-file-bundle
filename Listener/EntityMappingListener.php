@@ -150,19 +150,19 @@ class EntityMappingListener
             {
               $annotationsToFile[ImageSize::class]->configName = "default";
             }
-            if(!$annotationsToFile[ImageSize::class]->widthMin)
+            if(!$annotationsToFile[ImageSize::class]->widthMin === null)
             {
               $annotationsToFile[ImageSize::class]->widthMin = $this->imageSizeConfiguration->get("{$annotationsToFile[ImageSize::class]->configName}.width.min", null);
             }
-            if(!$annotationsToFile[ImageSize::class]->widthMax)
+            if(!$annotationsToFile[ImageSize::class]->widthMax === null)
             {
               $annotationsToFile[ImageSize::class]->widthMax = $this->imageSizeConfiguration->get("{$annotationsToFile[ImageSize::class]->configName}.width.max", null);
             }
-            if(!$annotationsToFile[ImageSize::class]->heightMin)
+            if(!$annotationsToFile[ImageSize::class]->heightMin === null)
             {
               $annotationsToFile[ImageSize::class]->heightMin = $this->imageSizeConfiguration->get("{$annotationsToFile[ImageSize::class]->configName}.height.min", null);
             }
-            if(!$annotationsToFile[ImageSize::class]->heightMax)
+            if(!$annotationsToFile[ImageSize::class]->heightMax === null)
             {
               $annotationsToFile[ImageSize::class]->heightMax = $this->imageSizeConfiguration->get("{$annotationsToFile[ImageSize::class]->configName}.height.max", null);
             }
