@@ -65,7 +65,7 @@ services:
       - "@austral.entity.mapping"
       - "@austral.entity_file.cropper"
       - "@austral.entity_file.cropper.config"
-      - "@austral.entity_file.compression"
+      - "@austral.entity_file.image"
 
   austral.entity_file.downloader:
     class:        Austral\EntityFileBundle\File\Download\FileDownloader

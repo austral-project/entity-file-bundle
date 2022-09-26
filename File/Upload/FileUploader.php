@@ -15,8 +15,8 @@ use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\Configuration\CropperConfiguration;
 use Austral\EntityBundle\Entity\Interfaces\FileInterface;
 
-use Austral\EntityFileBundle\File\Compression\Compression;
 use Austral\EntityFileBundle\File\Cropper\Cropper;
+use Austral\EntityFileBundle\File\Image\Image;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
 use Exception;
@@ -68,24 +68,24 @@ Class FileUploader
   protected Cropper $cropper;
 
   /**
-   * @var Compression
+   * @var Image
    */
-  protected Compression $compression;
+  protected Image $image;
 
   /**
    * UploadFiles constructor.
    *
    * @param RequestStack $request
+   * @param Mapping $mapping
    * @param Cropper $cropper
    * @param CropperConfiguration $cropperConfiguration
-   * @param Compression $compression
-   * @param Mapping $mapping
+   * @param Image $image
    */
   public function __construct(RequestStack $request,
     Mapping $mapping,
     Cropper $cropper,
     CropperConfiguration $cropperConfiguration,
-    Compression $compression
+    Image $image
   )
   {
     $this->request = $request->getCurrentRequest();
@@ -93,7 +93,7 @@ Class FileUploader
     $this->slugger = new AsciiSlugger();
     $this->cropper = $cropper;
     $this->cropperConfiguration = $cropperConfiguration;
-    $this->compression = $compression;
+    $this->image = $image;
     $this->mapping = $mapping;
     return $this;
   }
@@ -229,10 +229,10 @@ Class FileUploader
 
       if(file_exists($pathSource) && is_file($pathSource))
       {
+        $filesystem->copy($pathSource, $pathDestination);
         if(AustralTools::isImage($pathSource))
         {
-          $filesystem->copy($pathSource, $pathDestination);
-          $this->compression->compress($pathDestination, array("webp"));
+          $this->image->open($pathDestination)->autoRotate()->save($pathDestination, array("webp"));
         }
       }
     }
@@ -263,7 +263,7 @@ Class FileUploader
     if(AustralTools::isImage($filename))
     {
       $filePath = AustralTools::join($uploadsPath, $filename);
-      $this->compression->compress($filePath, array("webp"));
+      $this->image->open($filePath)->autoRotate()->save($filePath, array("webp"));
     }
     $this->deleteFileByFieldname($fieldFileMapping, $object, $uploadsPath)->deleteThumbnails($fieldFileMapping, $object);
     $fieldFileMapping->setObjectValue($object, null, $filename);
