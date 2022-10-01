@@ -1,6 +1,9 @@
 Changelog
 =========
 
+### Version 3.0.1 (2022-10-01)
+* Picture loses rotate information when compress webp format after uploads
+
 ### Version 3.0.0 (2021-02-10)
 * Created new repository and new branch in to Github
 * Changed the project License to the MIT
