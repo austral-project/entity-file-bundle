@@ -16,7 +16,7 @@ composer require austral/entity-file-bundle
 ```
 
 ## Documentation
-See documentation on the [official website](https://austral.dev/bundles/entity-file-bundle)
+See documentation on the [official website](https://austral.dev/en/bundles/entity-file-bundle)
 
 ## Commit Messages
 

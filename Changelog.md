@@ -4,6 +4,7 @@ Changelog
 ### Version 3.1.0 (2022-09-17)
 * Changed the Entities Interfaces used
 * Fix to upload files if multi objects
+* Picture loses rotate information when compress webp format after uploads
 
 ### Version 3.0.0 (2021-02-10)
 * Created new repository and new branch in to Github
