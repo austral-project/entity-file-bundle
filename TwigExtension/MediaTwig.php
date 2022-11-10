@@ -61,6 +61,7 @@ class MediaTwig extends AbstractExtension
       new TwigFilter('austral_entity_file_image_url', [$this, 'image']),
       new TwigFilter('austral_entity_file_download_url', [$this, 'download']),
 
+      new TwigFilter('austral_entity_file_path', [$this, 'filePath']),
       new TwigFilter('austral_entity_file_exist', [$this, 'fileExist']),
       new TwigFilter('austral_entity_file_size', [$this, 'fileSize']),
       new TwigFilter('austral_entity_file_mime_type', [$this, 'fileMimeType']),
@@ -79,6 +80,7 @@ class MediaTwig extends AbstractExtension
       "austral_entity_file.image_url"    => new TwigFunction("image", array($this, "image")),
       "austral_entity_file.download_url" => new TwigFunction("download", array($this, "download")),
 
+      "austral_entity_file.path"         => new TwigFunction("austral_entity_file.path", array($this, "filePath")),
       "austral_entity_file.parameters"   => new TwigFunction("austral_entity_file.parameters", array($this, "parameters")),
       "austral_entity_file.exist"        => new TwigFunction("austral_entity_file.exist", array($this, "fileExist")),
       "austral_entity_file.size"         => new TwigFunction("austral_entity_file.size", array($this, "fileSize")),
@@ -130,7 +132,7 @@ class MediaTwig extends AbstractExtension
    */
   public function fileExist(FileInterface $object, string $fieldname): bool
   {
-    return (bool)$this->getFilePath($object, $fieldname);
+    return (bool)$this->filePath($object, $fieldname);
   }
 
   /**
@@ -143,7 +145,7 @@ class MediaTwig extends AbstractExtension
    */
   public function fileSize(FileInterface $object, string $fieldname, bool $humanize = false)
   {
-    if($filePath = $this->getFilePath($object, $fieldname))
+    if($filePath = $this->filePath($object, $fieldname))
     {
       return $humanize ? AustralTools::humanizeSize($filePath) : filesize($filePath);
     }
@@ -159,7 +161,7 @@ class MediaTwig extends AbstractExtension
    */
   public function fileMimeType(FileInterface $object, string $fieldname): ?string
   {
-    if($filePath = $this->getFilePath($object, $fieldname))
+    if($filePath = $this->filePath($object, $fieldname))
     {
       return AustralTools::mimeType($filePath);
     }
@@ -175,7 +177,7 @@ class MediaTwig extends AbstractExtension
    */
   public function isImage(FileInterface $object, string $fieldname): bool
   {
-    if($filePath = $this->getFilePath($object, $fieldname))
+    if($filePath = $this->filePath($object, $fieldname))
     {
       return AustralTools::isImage($filePath);
     }
@@ -192,7 +194,7 @@ class MediaTwig extends AbstractExtension
    */
   public function imageSize(FileInterface $object, string $fieldname, bool $returnArray = true)
   {
-    if($filePath = $this->getFilePath($object, $fieldname))
+    if($filePath = $this->filePath($object, $fieldname))
     {
       return AustralTools::imageDimension($filePath, $returnArray);
     }
@@ -206,7 +208,7 @@ class MediaTwig extends AbstractExtension
    * @return string|null
    * @throws \Exception
    */
-  protected function getFilePath(?FileInterface $object, string $fieldname): ?string
+  public function filePath(?FileInterface $object, string $fieldname): ?string
   {
     /** @var FieldFileMapping $fieldMapping */
     if($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
@@ -275,7 +277,7 @@ class MediaTwig extends AbstractExtension
     /** @var FieldFileMapping $fieldMapping */
     if($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
     {
-      if($filePath = $this->getFilePath($object, $fieldname))
+      if($filePath = $this->filePath($object, $fieldname))
       {
         $isImage  = AustralTools::isImage($filePath);
         $parameters["file"]["reelFilename"] = $fieldMapping->getFilename($object, true);
