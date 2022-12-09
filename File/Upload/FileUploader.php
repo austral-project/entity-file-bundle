@@ -301,6 +301,7 @@ Class FileUploader
       {
         $this->filesystem->remove($oldFilePathWebp);
       }
+      $fieldFileMapping->setObjectValue($object, null);
 
       if(method_exists($object, "getCropperDataByFilename"))
       {
