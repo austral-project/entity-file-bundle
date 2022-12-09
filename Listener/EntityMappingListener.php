@@ -120,7 +120,7 @@ class EntityMappingListener
             }
             if(!$annotationsToFile[UploadParameters::class]->sizeMax)
             {
-              $annotationsToFile[UploadParameters::class]->sizeMax = $this->uploadsConfiguration->get("{$annotationsToFile[UploadParameters::class]->configName}.size.max", array());
+              $annotationsToFile[UploadParameters::class]->sizeMax = $this->uploadsConfiguration->get("{$annotationsToFile[UploadParameters::class]->configName}.size.max", null);
             }
             if(!$annotationsToFile[UploadParameters::class]->isRequired)
             {
