@@ -10,7 +10,9 @@
 
 namespace Austral\EntityFileBundle\Command;
 
+use Austral\EntityBundle\Mapping\EntityMapping;
 use Austral\EntityFileBundle\File\Compression\Compression;
+use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
 use Austral\ToolsBundle\Command\Base\Command;
 use Austral\ToolsBundle\Command\Exception\CommandException;
@@ -78,16 +80,31 @@ EOF
   protected function executeCommand(InputInterface $input, OutputInterface $output)
   {
     $this->compression = $this->container->get('austral.entity_file.compression');
-    $config = $this->container->get('austral.entity_file.uploads.config');
-    $rootUploadDir = $config->getUploadsPath("root");
-    $rootThumbnailDir = $config->getThumbnailPath("root");
 
-    $this->viewMessage("Start Scan to compress : {$rootUploadDir}", "title");
-    $this->scanDir($rootUploadDir);
+    $mapping = $this->container->get("austral.entity.mapping");
 
-    $this->viewMessage("Start Scan to compress : {$rootThumbnailDir}", "title");
-    $this->scanDir($rootThumbnailDir);
-
+    /** @var  EntityMapping $entityMapping */
+    foreach ($mapping->getEntitiesMapping() as $entityMapping)
+    {
+      /** @var $fieldFileMappings */
+      if($fieldFileMappings = $entityMapping->getFieldsMappingByClass(FieldFileMapping::class))
+      {
+        /** @var FieldFileMapping $fieldFileMapping */
+        foreach ($fieldFileMappings as $fieldFileMapping)
+        {
+          if(file_exists($fieldFileMapping->path->upload))
+          {
+            $this->viewMessage("Start Scan to compress : {$fieldFileMapping->path->upload}", "title");
+            $this->scanDir($fieldFileMapping->path->upload);
+          }
+          if(file_exists($fieldFileMapping->path->thumbnail))
+          {
+            $this->viewMessage("Start Scan to compress : {$fieldFileMapping->path->thumbnail}", "title");
+            $this->scanDir($fieldFileMapping->path->thumbnail);
+          }
+        }
+      }
+    }
   }
 
   /**
