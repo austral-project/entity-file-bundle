@@ -2,6 +2,7 @@ file:
   actions:
     add:                            Add file
     delete:                         Delete file
+    download:                       Download
     draggable:
       active:                       Drag file here !
   info:

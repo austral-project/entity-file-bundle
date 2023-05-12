@@ -3,6 +3,7 @@ file:
     add:                            Ajouter un file
     replace:                        Remplacer
     delete:                         Supprimer
+    download:                       Télécharger
     cancel:                         Annuler
     crop:                           Croper
     draggable:
