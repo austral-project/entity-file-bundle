@@ -98,7 +98,7 @@ final Class FieldFileMapping extends FieldMapping
         $value
       );
     }
-    return (file_exists($filePath) && is_file($filePath)) ? $filePath : false;
+    return ($filePath && file_exists($filePath) && is_file($filePath)) ? $filePath : false;
   }
 
   /**
