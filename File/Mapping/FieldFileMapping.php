@@ -167,13 +167,13 @@ final Class FieldFileMapping extends FieldMapping
   }
 
   /**
-   * @param string $cropperName
+   * @param string $cropperKey
    *
    * @return AustralFile\Cropper|null
    */
-  public function getCropperByName(string $cropperName): ?AustralFile\Cropper
+  public function getCropperByName(string $cropperKey): ?AustralFile\Cropper
   {
-    return $this->croppers ? (array_key_exists($cropperName, $this->croppers->croppers) ? $this->croppers->croppers[$cropperName] : null) : null;
+    return $this->croppers ? (array_key_exists($cropperKey, $this->croppers->croppers) ? $this->croppers->croppers[$cropperKey] : null) : null;
   }
 
   /**
@@ -190,14 +190,14 @@ final Class FieldFileMapping extends FieldMapping
 
   /**
    * @param $object
-   * @param string $cropperName
+   * @param string $cropperKey
    *
    * @return array
    * @throws \Exception
    */
-  public function getCropperDataByFieldname($object, string $cropperName): array
+  public function getCropperDataByFieldname($object, string $cropperKey): array
   {
-    if($this->getCropperByName($cropperName))
+    if($this->getCropperByName($cropperKey))
     {
       return array_key_exists($this->getFieldname(), $this->getCropperData($object)) ? $this->getCropperData($object)[$this->getFieldname()] : array();
     }
@@ -206,16 +206,16 @@ final Class FieldFileMapping extends FieldMapping
 
   /**
    * @param $object
-   * @param string $cropperName
+   * @param string $cropperKey
    *
    * @return array
    * @throws \Exception
    */
-  public function getCropperDataValue($object, string $cropperName): array
+  public function getCropperDataValue($object, string $cropperKey): array
   {
-    if($cropper = $this->getCropperByName($cropperName))
+    if($cropper = $this->getCropperByName($cropperKey))
     {
-      return array_key_exists($cropper->name, $this->getCropperDataByFieldname($object, $cropperName)) ?  $this->getCropperDataByFieldname($object, $cropperName)[$cropper->name] : array();
+      return array_key_exists($cropper->key, $this->getCropperDataByFieldname($object, $cropperKey)) ?  $this->getCropperDataByFieldname($object, $cropperKey)[$cropper->key] : array();
     }
     return array();
   }

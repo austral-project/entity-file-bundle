@@ -183,14 +183,19 @@ class EntityMappingListener
                   {
                     throw new \Exception("{$cropper} cropper name is not defined !!!");
                   }
-                  $cropper = new Cropper(
+                  $cropperObject = new Cropper(
                     $this->cropperConfiguration->get("{$cropper}.name", null),
                     $this->cropperConfiguration->get("{$cropper}.picto", null),
                     $this->cropperConfiguration->get("{$cropper}.ratio", null)
                   );
+                  $cropperObject->key = $cropper;
+                }
+                else
+                {
+                  $cropperObject = $cropper;
                 }
                 unset($annotationsToFile[Croppers::class]->croppers[$key]);
-                $annotationsToFile[Croppers::class]->croppers[$cropper->name] = $cropper;
+                $annotationsToFile[Croppers::class]->croppers[$cropperObject->key] = $cropperObject;
               }
             }
           }

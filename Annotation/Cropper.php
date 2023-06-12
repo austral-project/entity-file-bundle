@@ -22,6 +22,11 @@ final class Cropper
   /**
    * @var string
    */
+  public string $key;
+
+  /**
+   * @var string
+   */
   public string $name;
 
   /**
@@ -34,8 +39,6 @@ final class Cropper
    */
   public ?string $ratio = null;
 
-
-
   /**
    * @param string $name
    * @param string $picto
@@ -44,6 +47,7 @@ final class Cropper
   public function __construct(string $name, string $picto, ?string $ratio = null)
   {
     $this->name = $name;
+    $this->key = $name;
     $this->picto = $picto;
     $this->ratio = $ratio;
   }

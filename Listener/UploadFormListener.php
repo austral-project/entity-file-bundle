@@ -280,7 +280,7 @@ class UploadFormListener
           /** @var Cropper $cropper */
           foreach($fieldMapping->croppers->croppers as $cropper)
           {
-            $cropperFinal[$cropper->name] = (array) $cropper;
+            $cropperFinal[$cropper->key] = (array) $cropper;
           }
           $field->setCropper($cropperFinal);
         }
