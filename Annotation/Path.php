@@ -22,12 +22,12 @@ final class Path extends AustralEntityAnnotation implements EntityFileAnnotation
   /**
    * @var string
    */
-  public string $upload = "%kernel.project_dir%/public/uploads/@entity_slugger_case@";
+  public string $upload = "%kernel.project_dir%/%austral.file.public.path%/uploads/@entity_slugger_case@";
 
   /**
    * @var string
    */
-  public string $thumbnail = "%kernel.project_dir%/public/thumbnail/@entity_slugger_case@";
+  public string $thumbnail = "%kernel.project_dir%/%austral.file.public.path%/thumbnail/@entity_slugger_case@";
 
 
 }
