@@ -212,7 +212,7 @@ class UploadFormListener
     {
       $formEvent->getFormMapper()->add(Field\SymfonyField::create("cropperData", HiddenType::class,  array(
         "setter"  =>  function($object, $value){
-          $object->setCropperData(json_decode($value, true));
+          $object->setCropperData($value ? json_decode($value, true) : array());
         },
         "getter"  =>  function($object){
           return json_encode($object->getCropperData());
