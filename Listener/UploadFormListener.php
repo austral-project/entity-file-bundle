@@ -210,30 +210,44 @@ class UploadFormListener
     $object = $formEvent->getFormMapper()->getObject();
     if(AustralTools::usedClass($object, EntityTranslateMasterFileCropperTrait::class) || AustralTools::usedClass($object, EntityFileCropperTrait::class) )
     {
-      $formEvent->getFormMapper()->add(Field\SymfonyField::create("cropperData", HiddenType::class,  array(
-        "setter"  =>  function($object, $value){
-          $object->setCropperData($value ? json_decode($value, true) : array());
-        },
-        "getter"  =>  function($object){
-          return json_encode($object->getCropperData());
-        },
-        "attr"  =>  array(
-          'data-cropper-data' => "",
-          "autocomplete" => "off"
-        )
-      )));
-      $formEvent->getFormMapper()->add(Field\SymfonyField::create("generateCropperByKey", HiddenType::class, array(
-        "setter"  =>  function($object, $value){
-          $object->setGenerateCropperByKey(json_decode($value ? : "[]", true));
-        },
-        "getter"  =>  function($object){
-          return json_encode($object->getGenerateCropperByKey());
-        },
-        "attr"  =>  array(
-          'data-cropper-key-generate' => "",
-          "autocomplete" => "off"
-        )
-      )));
+      $cropperIsEnabled = false;
+      foreach($formEvent->getFormMapper()->allFields() as $field)
+      {
+        if($field instanceof Field\UploadField)
+        {
+          if($field->getCropper())
+          {
+            $cropperIsEnabled = true;
+          }
+        }
+      }
+
+      if($cropperIsEnabled) {
+        $formEvent->getFormMapper()->add(Field\SymfonyField::create("cropperData", HiddenType::class, array(
+          "setter" => function ($object, $value) {
+            $object->setCropperData($value ? json_decode($value, true) : array());
+          },
+          "getter" => function ($object) {
+            return json_encode($object->getCropperData());
+          },
+          "attr" => array(
+            'data-cropper-data' => "",
+            "autocomplete" => "off"
+          )
+        )));
+        $formEvent->getFormMapper()->add(Field\SymfonyField::create("generateCropperByKey", HiddenType::class, array(
+          "setter" => function ($object, $value) {
+            $object->setGenerateCropperByKey(json_decode($value ?: "[]", true));
+          },
+          "getter" => function ($object) {
+            return json_encode($object->getGenerateCropperByKey());
+          },
+          "attr" => array(
+            'data-cropper-key-generate' => "",
+            "autocomplete" => "off"
+          )
+        )));
+      }
     }
   }
 
