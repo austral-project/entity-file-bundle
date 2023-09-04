@@ -189,6 +189,14 @@ class ImageRender
       {
         $this->cropper->crop($object, $fieldname, $cropperKey);
       }
+      if(!file_exists($reelFilePath))
+      {
+        $reelFilePath = AustralTools::join(
+          $fieldFileMapping->path->upload,
+          $fieldname,
+          $fileName
+        );
+      }
     }
 
     if(!file_exists($reelFilePath) || !is_file($reelFilePath))
