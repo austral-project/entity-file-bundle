@@ -275,7 +275,7 @@ class MediaTwig extends AbstractExtension
       ),
     );
     /** @var FieldFileMapping $fieldMapping */
-    if($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
+    if($object && ($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname)))
     {
       if($filePath = $this->filePath($object, $fieldname))
       {
