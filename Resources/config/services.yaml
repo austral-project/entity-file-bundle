@@ -3,8 +3,8 @@ parameters:
 
 services:
   _defaults:
-    autowire:       false
-    autoconfigure:  false
+    autowire:       true
+    autoconfigure:  true
     public:         true
 
 

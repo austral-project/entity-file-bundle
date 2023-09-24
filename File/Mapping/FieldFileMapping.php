@@ -152,7 +152,7 @@ final Class FieldFileMapping extends FieldMapping
    */
   public function getFilenameWithoutExtension(FileInterface $object): ?string
   {
-    return pathinfo($this->getFilename($object), PATHINFO_FILENAME);
+    return $this->getFilename($object) ? pathinfo($this->getFilename($object), PATHINFO_FILENAME) : null;
   }
 
   /**
@@ -163,7 +163,7 @@ final Class FieldFileMapping extends FieldMapping
    */
   public function getFilenameExtension(FileInterface $object): ?string
   {
-    return pathinfo($this->getEntityFileValue($object), PATHINFO_EXTENSION);
+    return $this->getEntityFileValue($object) ? pathinfo($this->getEntityFileValue($object), PATHINFO_EXTENSION) : null;
   }
 
   /**
