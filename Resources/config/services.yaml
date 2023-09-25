@@ -16,12 +16,14 @@ services:
       - { name: console.command, command: "austral:file:compress" }
 
 ##### Listener #####
+  Austral\EntityFileBundle\Listener\DoctrineListener: "@austral.entity_file.doctrine.listener"
   austral.entity_file.doctrine.listener:
     class:        Austral\EntityFileBundle\Listener\DoctrineListener
     arguments:    [ "@austral.entity.mapping","@austral.entity_file.uploader" ]
     tags:
       - { name: doctrine.event_subscriber, connection: default }
 
+  Austral\EntityFileBundle\Listener\EntityMappingListener: "@austral.entity_file.entity_mapping.listener"
   austral.entity_file.entity_mapping.listener:
     class:        Austral\EntityFileBundle\Listener\EntityMappingListener
     arguments:
@@ -32,6 +34,7 @@ services:
     tags:
       - { name: kernel.event_listener, event: "austral.event.entity.initialise.mapping", method: mapping }
 
+  Austral\EntityFileBundle\Listener\EntityManagerListener: "@austral.entity_file.entity_manager.listener"
   austral.entity_file.entity_manager.listener:
     class:        Austral\EntityFileBundle\Listener\EntityManagerListener
     arguments:
@@ -111,6 +114,7 @@ services:
     arguments:    ["@austral.entity_file.compression.config"]
 
 ##### Twig Extension
+  Austral\EntityFileBundle\TwigExtension\MediaTwig: "@twig.extension.media"
   twig.extension.media:
     class:        Austral\EntityFileBundle\TwigExtension\MediaTwig
     arguments:    [ "@service_container", "@austral.entity.mapping" ]
