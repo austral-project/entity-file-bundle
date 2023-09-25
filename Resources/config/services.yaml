@@ -44,23 +44,28 @@ services:
 
 
 ##### Parameters
+  Austral\EntityFileBundle\Configuration\UploadsConfiguration: "@austral.entity_file.uploads.config"
   austral.entity_file.uploads.config:
     class:        Austral\EntityFileBundle\Configuration\UploadsConfiguration
     arguments:    ["%austral_entity_file.uploads%", "@austral.entity_file.cropper.config"]
 
+  Austral\EntityFileBundle\Configuration\CropperConfiguration: "@austral.entity_file.cropper.config"
   austral.entity_file.cropper.config:
     class:        Austral\EntityFileBundle\Configuration\CropperConfiguration
     arguments:    ["%austral_entity_file.cropper%"]
 
+  Austral\EntityFileBundle\Configuration\ImageSizeConfiguration: "@austral.entity_file.image_size.config"
   austral.entity_file.image_size.config:
     class:        Austral\EntityFileBundle\Configuration\ImageSizeConfiguration
     arguments:    ["%austral_entity_file.image_size%"]
 
+  Austral\EntityFileBundle\Configuration\CompressionConfiguration: "@austral.entity_file.compression.config"
   austral.entity_file.compression.config:
     class:        Austral\EntityFileBundle\Configuration\CompressionConfiguration
     arguments:    ["%austral_entity_file.compression%"]
 
 ##### File
+  Austral\EntityFileBundle\File\Upload\FileUploader: "@austral.entity_file.uploader"
   austral.entity_file.uploader:
     class:        Austral\EntityFileBundle\File\Upload\FileUploader
     arguments:
@@ -70,14 +75,17 @@ services:
       - "@austral.entity_file.cropper.config"
       - "@austral.entity_file.image"
 
+  Austral\EntityFileBundle\File\Download\FileDownloader: "@austral.entity_file.downloader"
   austral.entity_file.downloader:
     class:        Austral\EntityFileBundle\File\Download\FileDownloader
     arguments:    ["@service_container", "@austral.entity.mapping"]
 
+  Austral\EntityFileBundle\File\Image\Image: "@austral.entity_file.image"
   austral.entity_file.image:
     class:        Austral\EntityFileBundle\File\Image\Image
     arguments:    [ \Imagine\Gd\Imagine, "@austral.entity_file.compression" ]
 
+  Austral\EntityFileBundle\File\Image\ImageRender: "@austral.entity_file.image.render"
   austral.entity_file.image.render:
     class:        Austral\EntityFileBundle\File\Image\ImageRender
     arguments:
@@ -87,14 +95,17 @@ services:
       - "@austral.entity_file.uploads.config"
       - "@austral.entity_file.cropper"
 
+  Austral\EntityFileBundle\File\Link\Generator: "@austral.entity_file.link.generator"
   austral.entity_file.link.generator:
     class:        Austral\EntityFileBundle\File\Link\Generator
     arguments:    ["@router", "@austral.entity.mapping"]
 
+  Austral\EntityFileBundle\File\Cropper\Cropper: "@austral.entity_file.cropper"
   austral.entity_file.cropper:
     class:        Austral\EntityFileBundle\File\Cropper\Cropper
     arguments:    ["@austral.entity_file.image", "@austral.entity.mapping"]
 
+  Austral\EntityFileBundle\File\Compression\Compression: "@austral.entity_file.compression"
   austral.entity_file.compression:
     class:        Austral\EntityFileBundle\File\Compression\Compression
     arguments:    ["@austral.entity_file.compression.config"]
