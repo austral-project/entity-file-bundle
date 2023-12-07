@@ -255,7 +255,7 @@ Class FileUploader
     );
     $originalFilename = pathinfo($uploadedFile->getClientOriginalName(), PATHINFO_FILENAME);
     $safeFilename = strtolower($this->slugger->slug($originalFilename));
-    $filename = $safeFilename.uniqid("__UNIQID__").'.'.$uploadedFile->guessExtension();
+    $filename = $safeFilename.uniqid("__UNIQID__").'.'.($uploadedFile->guessExtension() ?? $uploadedFile->guessClientExtension());
     $uploadedFile->move(
       $uploadsPath,
       $filename
