@@ -267,11 +267,13 @@ class MediaTwig extends AbstractExtension
         ),
       ),
       "infos"         =>  array(
-        "mimeType"      =>  null,
-        "extension"     =>  null,
-        "size"          =>  null,
-        "sizeHuman"     =>  null,
-        "imageSize"     =>  null,
+        "mimeType"          =>  null,
+        "extension"         =>  null,
+        "size"              =>  null,
+        "sizeHuman"         =>  null,
+        "imageSize"         =>  null,
+        "imageDimension"    =>  null,
+        "aspectRatio"       =>  null,
       ),
     );
     /** @var FieldFileMapping $fieldMapping */
@@ -286,12 +288,21 @@ class MediaTwig extends AbstractExtension
           "download"      =>  $this->download($object, $fieldname),
           "absolute"      =>  $filePath,
         );
+
+        $imageDimension = $isImage ? AustralTools::imageDimension($filePath, true) : null;
+        $aspectRatio = null;
+        if(array_key_exists("width", $imageDimension) && array_key_exists("height", $imageDimension))
+        {
+          $aspectRatio = $imageDimension["width"]/$imageDimension["height"];
+        }
         $parameters['infos'] = array(
-          "mimeType"      =>  AustralTools::mimeType($filePath),
-          "extension"     =>  AustralTools::extension($filePath),
-          "size"          =>  filesize($filePath),
-          "sizeHuman"     =>  AustralTools::humanizeSize($filePath),
-          "imageSize"     =>  $isImage ? AustralTools::imageDimension($filePath) : null
+          "mimeType"          =>  AustralTools::mimeType($filePath),
+          "extension"         =>  AustralTools::extension($filePath),
+          "size"              =>  filesize($filePath),
+          "sizeHuman"         =>  AustralTools::humanizeSize($filePath),
+          "imageSize"         =>  $imageDimension ? implode(" x ", $imageDimension) : null,
+          "imageDimension"    =>  $imageDimension,
+          "aspectRatio"       =>  $aspectRatio,
         );
       }
     }
