@@ -272,7 +272,10 @@ class MediaTwig extends AbstractExtension
         "size"              =>  null,
         "sizeHuman"         =>  null,
         "imageSize"         =>  null,
-        "imageDimension"    =>  null,
+        "imageDimension"    =>  array(
+          "width"             =>  null,
+          "height"            =>  null,
+        ),
         "aspectRatio"       =>  null,
       ),
     );
