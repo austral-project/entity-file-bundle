@@ -291,22 +291,25 @@ class MediaTwig extends AbstractExtension
           "download"      =>  $this->download($object, $fieldname),
           "absolute"      =>  $filePath,
         );
-
-        $imageDimension = $isImage ? AustralTools::imageDimension($filePath, true) : null;
-        $aspectRatio = null;
-        if(array_key_exists("width", $imageDimension) && array_key_exists("height", $imageDimension))
+        $parameters['infos']["mimeType"] = AustralTools::mimeType($filePath);
+        $parameters['infos']["extension"] = AustralTools::extension($filePath);
+        $parameters['infos']["size"] = filesize($filePath);
+        $parameters['infos']["sizeHuman"] = AustralTools::humanizeSize($filePath);
+        if($isImage)
         {
-          $aspectRatio = $imageDimension["width"]/$imageDimension["height"];
+          $imageDimension = $isImage ? AustralTools::imageDimension($filePath, true) : array(
+            "width"             =>  null,
+            "height"            =>  null,
+          );
+          $aspectRatio = null;
+          if(array_key_exists("width", $imageDimension) && array_key_exists("height", $imageDimension))
+          {
+            $aspectRatio = $imageDimension["width"]/$imageDimension["height"];
+          }
+          $parameters['infos']["imageSize"] = $imageDimension ? implode(" x ", $imageDimension) : null;
+          $parameters['infos']["imageDimension"] = $imageDimension;
+          $parameters['infos']["aspectRatio"] = $aspectRatio;
         }
-        $parameters['infos'] = array(
-          "mimeType"          =>  AustralTools::mimeType($filePath),
-          "extension"         =>  AustralTools::extension($filePath),
-          "size"              =>  filesize($filePath),
-          "sizeHuman"         =>  AustralTools::humanizeSize($filePath),
-          "imageSize"         =>  $imageDimension ? implode(" x ", $imageDimension) : null,
-          "imageDimension"    =>  $imageDimension,
-          "aspectRatio"       =>  $aspectRatio,
-        );
       }
     }
     return $parameters;
