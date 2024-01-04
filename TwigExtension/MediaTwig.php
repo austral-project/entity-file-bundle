@@ -304,7 +304,10 @@ class MediaTwig extends AbstractExtension
           $aspectRatio = null;
           if(array_key_exists("width", $imageDimension) && array_key_exists("height", $imageDimension))
           {
-            $aspectRatio = $imageDimension["width"]/$imageDimension["height"];
+            if($imageDimension["width"] > 0 && $imageDimension["height"] > 0)
+            {
+              $aspectRatio = $imageDimension["width"]/$imageDimension["height"];
+            }
           }
           $parameters['infos']["imageSize"] = $imageDimension ? implode(" x ", $imageDimension) : null;
           $parameters['infos']["imageDimension"] = $imageDimension;
