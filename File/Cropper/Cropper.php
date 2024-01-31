@@ -122,7 +122,7 @@ class Cropper
         $originalFilename = pathinfo($filePath, PATHINFO_FILENAME);
         $filePathSave = AustralTools::join(
           $fieldFileMapping->getFilePathDir(),
-          $originalFilename."__CROP__{$cropperKey}_TMP.".$this->image->getExtension()
+          $originalFilename."__CROP__{$cropperKey}.".$this->image->getExtension()
         );
 
         $this->image->save($filePathSave, array("webp"));
