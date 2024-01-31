@@ -75,7 +75,6 @@ class Cropper
         $imageNaturalHeight = (float) AustralTools::getValueByKey($imageData, "naturalHeight", 0);
 
         $imageWidth = (float) AustralTools::getValueByKey($imageData, "width", 0);
-
         $coeffZoom = $imageWidth > 0 ? $imageNaturalWidth/$imageWidth : 0;
 
         $cropBoxWidth = (float) AustralTools::getValueByKey($cropBoxData, "width", 0);
@@ -96,6 +95,17 @@ class Cropper
         $cropBoxFinalWidth = $cropBoxWidth*$coeffZoom;
         $cropBoxFinalHeight = $cropBoxHeight*$coeffZoom;
 
+        if($cropBoxFinalWidth > $imageNaturalWidth)
+        {
+          $cropBoxFinalWidth = $imageNaturalWidth;
+        }
+
+        if($cropBoxFinalHeight > $imageNaturalHeight)
+        {
+          $cropBoxFinalHeight = $imageNaturalHeight;
+        }
+
+
         $rotate = 0;
         $flip = null;
 
@@ -112,8 +122,9 @@ class Cropper
         $originalFilename = pathinfo($filePath, PATHINFO_FILENAME);
         $filePathSave = AustralTools::join(
           $fieldFileMapping->getFilePathDir(),
-          $originalFilename."__CROP__{$cropperKey}.".$this->image->getExtension()
+          $originalFilename."__CROP__{$cropperKey}_TMP.".$this->image->getExtension()
         );
+
         $this->image->save($filePathSave, array("webp"));
       }
     }
