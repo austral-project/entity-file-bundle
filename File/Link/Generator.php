@@ -36,15 +36,22 @@ class Generator
   protected Mapping $mapping;
 
   /**
+   * @var string
+   */
+  protected string $defaultLocale = "en";
+
+  /**
    * Generator constructor.
    *
    * @param UrlGeneratorInterface $urlGenerator
    * @param Mapping $mapping
+   * @param string $defaultLocale
    */
-  public function __construct(UrlGeneratorInterface $urlGenerator, Mapping $mapping)
+  public function __construct(UrlGeneratorInterface $urlGenerator, Mapping $mapping, string $defaultLocale = "en")
   {
     $this->urlGenerator = $urlGenerator;
     $this->mapping = $mapping;
+    $this->defaultLocale = $defaultLocale;
   }
 
   /**
@@ -74,6 +81,10 @@ class Generator
         if($object instanceof TranslateMasterInterface)
         {
           $urlParameters["_locale"] = $object->getLanguageCurrent();
+        }
+        else
+        {
+          $urlParameters["_locale"] = $this->defaultLocale;
         }
       }
 
@@ -136,6 +147,10 @@ class Generator
         if($object instanceof TranslateMasterInterface)
         {
           $urlParameters["_locale"] = $object->getLanguageCurrent();
+        }
+        else
+        {
+          $urlParameters["_locale"] = $this->defaultLocale;
         }
       }
 

@@ -101,7 +101,7 @@ services:
   Austral\EntityFileBundle\File\Link\Generator: "@austral.entity_file.link.generator"
   austral.entity_file.link.generator:
     class:        Austral\EntityFileBundle\File\Link\Generator
-    arguments:    ["@router", "@austral.entity.mapping"]
+    arguments:    ["@router", "@austral.entity.mapping", "%locale%"]
 
   Austral\EntityFileBundle\File\Cropper\Cropper: "@austral.entity_file.cropper"
   austral.entity_file.cropper:
