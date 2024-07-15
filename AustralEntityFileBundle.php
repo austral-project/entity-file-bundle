@@ -21,7 +21,7 @@ use Symfony\Component\HttpKernel\Bundle\Bundle;
 class AustralEntityFileBundle extends Bundle
 {
 
-  public function build(ContainerBuilder $container)
+  public function build(ContainerBuilder $container): void
   {
     parent::build($container);
     $container->addCompilerPass(new EntityFileCompiler(), PassConfig::TYPE_BEFORE_OPTIMIZATION, 1000);
