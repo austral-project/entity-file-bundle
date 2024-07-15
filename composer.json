@@ -13,7 +13,7 @@
     }
   ],
   "require": {
-    "php":                                    "^7.4 || ^8.0 || ^8.1 || ^8.2",
+    "php":                                    "^8.0 || ^8.1 || ^8.2",
 
     "austral/tools-bundle":                   "^3.1",
     "austral/entity-bundle":                  "^3.1",
