@@ -230,7 +230,7 @@ Class FileUploader
       if(file_exists($pathSource) && is_file($pathSource))
       {
         $filesystem->copy($pathSource, $pathDestination);
-        if(AustralTools::isImage($pathSource))
+        if(AustralTools::isImage($pathSource) && AustralTools::extension($pathSource) != "svg")
         {
           $this->image->open($pathDestination)->autoRotate()->save($pathDestination, array("webp"));
         }
