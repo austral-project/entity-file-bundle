@@ -13,12 +13,12 @@
     }
   ],
   "require": {
-    "php":                                    "^7.4 || ^8.0",
+    "php":                                    "^7.4 || ^8.0 || ^8.1 || ^8.2",
 
     "austral/tools-bundle":                   "^3.1",
     "austral/entity-bundle":                  "^3.1",
 
-    "symfony/config":                         "^5.4",
+    "symfony/config":                         "^5.4 || ^6.4",
 
     "imagine/imagine":                        "^1.3"
   },
