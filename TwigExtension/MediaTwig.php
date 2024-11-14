@@ -232,16 +232,19 @@ class MediaTwig extends AbstractExtension
     $ratio = null;
     if($imageSizes = $this->imageSize($object, $fieldname, true))
     {
-      $ratio = $imageSizes["width"]/$imageSizes['height'];
-      /** @var FieldFileMapping $fieldMapping */
-      if($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
+      if(array_key_exists("width", $imageSizes) && array_key_exists("height", $imageSizes) && $imageSizes["width"] > 0 && $imageSizes["height"] > 0)
       {
-        if($cropperKey && ($cropperData = $fieldMapping->getCropperDataByFieldname($object, $cropperKey)))
+        $ratio = $imageSizes["width"]/$imageSizes['height'];
+        /** @var FieldFileMapping $fieldMapping */
+        if($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
         {
-          $cropBoxData = AustralTools::getValueByKey($cropperData, "cropBoxData", array());
-          $cropBoxWidth = (float) AustralTools::getValueByKey($cropBoxData, "width", 0);
-          $cropBoxHeight = (float) AustralTools::getValueByKey($cropBoxData, "height", 0);
-          $ratio = $cropBoxWidth/$cropBoxHeight;
+          if($cropperKey && ($cropperData = $fieldMapping->getCropperDataByFieldname($object, $cropperKey)))
+          {
+            $cropBoxData = AustralTools::getValueByKey($cropperData, "cropBoxData", array());
+            $cropBoxWidth = (float) AustralTools::getValueByKey($cropBoxData, "width", 0);
+            $cropBoxHeight = (float) AustralTools::getValueByKey($cropBoxData, "height", 0);
+            $ratio = $cropBoxWidth/$cropBoxHeight;
+          }
         }
       }
     }
