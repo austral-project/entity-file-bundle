@@ -152,19 +152,7 @@ Class FileUploader
             $this->uploadFile($fieldFileMapping, $object, $object->getUploadFiles()[$fieldFileMapping->getFieldname()]);
           }
         }
-
-        if(method_exists($object, "getGenerateCropperByKey") && $fieldFileMapping->croppers)
-        {
-          if(array_key_exists($fieldFileMapping->getFieldname(), $object->getGenerateCropperByKey()))
-          {
-            foreach($object->getGenerateCropperByKey()[$fieldFileMapping->getFieldname()] as $cropperKey => $value)
-            {
-              $this->cropper->crop($object, $fieldFileMapping->getFieldname(), $cropperKey, $fieldFileMapping->getCropperDataValue($object, $cropperKey));
-              $this->deleteThumbnails($fieldFileMapping, $object, $cropperKey);
-            }
-          }
-        }
-
+        $this->generateCrop($fieldFileMapping, $object);
         if(array_key_exists($fieldFileMapping->getFieldname(), $object->getDeleteFiles()))
         {
           if($object->getDeleteFiles()[$fieldFileMapping->getFieldname()] && !$fieldFileMapping->uploadParameters->isRequired)
@@ -182,6 +170,29 @@ Class FileUploader
     return $this;
   }
 
+  /**
+   * generateCrop
+   *
+   * @param FieldFileMapping $fieldFileMapping
+   * @param FileInterface $object
+   * @return $this
+   * @throws Exception
+   */
+  public function generateCrop(FieldFileMapping $fieldFileMapping, FileInterface $object): static
+  {
+    if(method_exists($object, "getGenerateCropperByKey") && $fieldFileMapping->croppers)
+    {
+      if(array_key_exists($fieldFileMapping->getFieldname(), $object->getGenerateCropperByKey()))
+      {
+        foreach($object->getGenerateCropperByKey()[$fieldFileMapping->getFieldname()] as $cropperKey => $value)
+        {
+          $this->cropper->crop($object, $fieldFileMapping->getFieldname(), $cropperKey, $fieldFileMapping->getCropperDataValue($object, $cropperKey));
+          $this->deleteThumbnails($fieldFileMapping, $object, $cropperKey);
+        }
+      }
+    }
+    return $this;
+  }
 
   /**
    * @param FieldFileMapping $fieldFileMapping
