@@ -183,7 +183,7 @@ class Image
       $height = $this->calculateAutoHeight($width);
     }
     $sizeBox = new Box($width, $height);
-    $this->image->thumbnail($sizeBox, $mode);
+    $this->image = $this->image->thumbnail($sizeBox, $mode);
     return $this;
   }
 
