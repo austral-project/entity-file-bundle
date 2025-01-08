@@ -265,6 +265,7 @@ class MediaTwig extends AbstractExtension
         "reelFilename"    =>  "",
         "path"            =>  array(
           "view"          =>  null,
+          "original"      =>  null,
           "download"      =>  null,
           "absolute"      =>  null,
         ),
@@ -290,7 +291,8 @@ class MediaTwig extends AbstractExtension
         $isImage  = AustralTools::isImage($filePath);
         $parameters["file"]["reelFilename"] = $fieldMapping->getFilename($object, true);
         $parameters["file"]['path'] = array(
-          "view"          =>  $isImage ? $this->image($object, $fieldname, "original", "i", 200, 200) : null,
+          "view"          =>  $isImage ? $this->image($object, $fieldname, "original", "i", 1000, 1000) : null,
+          "original"      =>  $isImage ? $this->image($object, $fieldname) : null,
           "download"      =>  $this->download($object, $fieldname),
           "absolute"      =>  $filePath,
         );

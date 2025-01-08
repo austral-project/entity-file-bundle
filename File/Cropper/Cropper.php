@@ -16,6 +16,7 @@ use Austral\EntityFileBundle\Entity\Traits\EntityFileCropperTrait;
 use Austral\EntityFileBundle\File\Image\Image;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
+use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Austral Cropper.
@@ -35,6 +36,11 @@ class Cropper
   protected Image $image;
 
   /**
+   * @var Filesystem
+   */
+  protected Filesystem $filesystem;
+
+  /**
    * Cropper constructor.
    *
    */
@@ -42,6 +48,7 @@ class Cropper
   {
     $this->mapping = $mapping;
     $this->image = $image;
+    $this->filesystem = new Filesystem();
   }
 
   /**
@@ -124,8 +131,19 @@ class Cropper
           $fieldFileMapping->getFilePathDir(),
           $originalFilename."__CROP__{$cropperKey}.".$this->image->getExtension()
         );
-
-        $this->image->save($filePathSave, array("webp"));
+        $generateOtherFormat = array("webp");
+        foreach($generateOtherFormat as $format)
+        {
+          $savePathWidthFormat = AustralTools::join(
+            $fieldFileMapping->getFilePathDir(),
+            $originalFilename."__CROP__{$cropperKey}.".$format
+          );
+          if(file_exists($savePathWidthFormat) && is_file($savePathWidthFormat))
+          {
+            $this->filesystem->remove($savePathWidthFormat);
+          }
+        }
+        $this->image->save($filePathSave, $generateOtherFormat);
       }
     }
     return $this;
