@@ -26,6 +26,7 @@ use Austral\FormBundle\Event\FormEvent;
 
 use Austral\FormBundle\Event\FormFieldEvent;
 use Austral\FormBundle\Field\UploadField;
+use Austral\FormBundle\Mapper\Fieldset;
 use Austral\ToolsBundle\AustralTools;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
@@ -222,8 +223,11 @@ class UploadFormListener
         }
       }
 
+      $fieldsetHidden = $formEvent->getFormMapper()
+        ->addFieldset("hidden")
+        ->setPositionName(Fieldset::POSITION_NONE);
       if($cropperIsEnabled) {
-        $formEvent->getFormMapper()->add(Field\SymfonyField::create("cropperData", HiddenType::class, array(
+        $fieldsetHidden->add(Field\SymfonyField::create("cropperData", HiddenType::class, array(
           "setter" => function ($object, $value) {
             $object->setCropperData($value ? json_decode($value, true) : array());
           },
@@ -235,7 +239,7 @@ class UploadFormListener
             "autocomplete" => "off"
           )
         )));
-        $formEvent->getFormMapper()->add(Field\SymfonyField::create("generateCropperByKey", HiddenType::class, array(
+        $fieldsetHidden->add(Field\SymfonyField::create("generateCropperByKey", HiddenType::class, array(
           "setter" => function ($object, $value) {
             $object->setGenerateCropperByKey(json_decode($value ?: "[]", true));
           },
