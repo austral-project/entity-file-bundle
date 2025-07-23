@@ -18,6 +18,7 @@ use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\EntityFileBundle\File\Upload\FileUploader;
 
 use Austral\ToolsBundle\AustralTools;
+use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
 use Doctrine\Common\EventArgs;
 use Doctrine\Common\EventSubscriber;
 use Doctrine\ORM\Event\LifecycleEventArgs;
@@ -28,6 +29,7 @@ use Doctrine\ORM\Events;
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
+#[AsDoctrineListener(event: 'preRemove', connection: 'default')]
 class DoctrineListener implements EventSubscriber
 {
 

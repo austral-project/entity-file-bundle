@@ -25,7 +25,7 @@ class EntityFileCompiler implements CompilerPassInterface
    * Init Configuration Austral Admin with all parameters defined
    * @var ContainerBuilder $container
    */
-  public function process(ContainerBuilder $container)
+  public function process(ContainerBuilder $container): void
   {
     foreach(array('uploads', "cropper", "image_size") as $keyParameter)
     {
