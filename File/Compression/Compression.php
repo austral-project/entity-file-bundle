@@ -133,6 +133,7 @@ class Compression
         }
       }
     }
+
     if(count($formats) > 0) {
       $httpClient = new NativeHttpClient();
       $payload = [
@@ -140,6 +141,7 @@ class Compression
         'outputDir' => $imageThumbnailPathDir,
         'formats' => $formats,
         'options' => $options,
+        "wait" => true
       ];
 
       try {
@@ -158,7 +160,17 @@ class Compression
         throw new \RuntimeException("Erreur HTTP: " . $e->getMessage());
       }
       $data = json_decode($content, true);
-      if ($statusCode !== 200 || !$data || !isset($data['accepted'])) {
+      $requestSuccess = false;
+      if(isset($data['accepted']))
+      {
+        $requestSuccess = $data['accepted'];
+      }
+      elseif(isset($data['success']))
+      {
+        $requestSuccess = $data['success'] ;
+      }
+
+      if ($statusCode !== 200 || !$data || !$requestSuccess) {
         throw new \RuntimeException("Réponse invalide du service Squoosh : $content");
       }
     }
