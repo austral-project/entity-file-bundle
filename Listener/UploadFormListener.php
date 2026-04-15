@@ -369,7 +369,7 @@ class UploadFormListener
           $fieldDeleteAttr["data-popin-update-input"] = $field->getOptions()['attr']["data-popin-update-input"]."-delete";
         }
 
-        $formFieldEvent->getFormMapper()->add(Field\SymfonyField::create("{$field->getFieldname()}DeleteFile", HiddenType::class, array(
+        $formFieldEvent->getFormMapper()->addFieldset("hidden")->setPositionName(Fieldset::POSITION_NONE)->add(Field\SymfonyField::create("{$field->getFieldname()}DeleteFile", HiddenType::class, array(
           "setter"  =>  function(FileInterface $object, $value) use($field) {
             $object->setDeleteFileByFieldname($field->getFieldname(), $value);
           },
