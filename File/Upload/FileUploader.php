@@ -271,6 +271,7 @@ Class FileUploader
       $uploadsPath,
       $filename
     );
+    $object->setUploadFileByFieldname($fieldFileMapping->getFieldname(), null);
     $filePath = AustralTools::join($uploadsPath, $filename);
     if(AustralTools::isImage($filename) && AustralTools::extension($filePath) != "svg")
     {

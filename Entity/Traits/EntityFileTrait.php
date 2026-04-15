@@ -41,6 +41,14 @@ trait EntityFileTrait
   /**
    * @return array
    */
+  public function removeUploadFiles(): array
+  {
+    return $this->uploadFiles = [];
+  }
+
+  /**
+   * @return array
+   */
   public function getUploadFiles(): array
   {
     return $this->uploadFiles;
