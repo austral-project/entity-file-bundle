@@ -11,6 +11,7 @@
 namespace Austral\EntityFileBundle\Listener;
 
 use Austral\EntityBundle\Mapping\Mapping;
+use Austral\EntityFileBundle\Validator\SvgSecurity;
 use Austral\EntityFileBundle\Annotation\Cropper;
 use Austral\EntityFileBundle\Configuration\CropperConfiguration;
 use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
@@ -34,6 +35,7 @@ use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\Validator\Constraints\File;
 use Symfony\Component\Validator\Constraints as Constraints;
+use Symfony\Component\Mime\MimeTypes;
 
 use \Exception;
 
@@ -320,14 +322,27 @@ class UploadFormListener
               )
             )
           );
+
+          $mimeTypesList = $field->getMimeTypes();
+          $mimeTypesService = MimeTypes::getDefault(); // ou instance injectée
+          $extensions = [];
+
+          foreach ($mimeTypesList as $mimeType) {
+            $exts = $mimeTypesService->getExtensions($mimeType);
+            $extensions = array_merge($extensions, $exts);
+          }
+          $extensions = array_values(array_unique($extensions));
           $field->addConstraint(new File(array(
                 'maxSize' => $field->getMaxSize(),
+                "extensions" => $extensions,
                 'mimeTypes' => $field->getMimeTypes(),
                 'maxSizeMessage' => $field->getMaxSizeMessage(),
                 'mimeTypesMessage' => $field->getMimeTypesMessage()
               )
-            )
+            ), true
           );
+          $field->addConstraint(new SvgSecurity());
+
           if($imageSizes = $field->getImageSizes())
           {
             $field->addConstraint(new Constraints\Image(array(
