@@ -11,30 +11,24 @@
 namespace Austral\EntityFileBundle\File\Link;
 
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityBundle\Entity\Interfaces\FileInterface;
+use Austral\Contracts\File\FileInterface;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
-use Austral\EntityBundle\Entity\Interfaces\TranslateMasterInterface;
+use Austral\Contracts\Translate\TranslateMasterInterface;
 use Austral\ToolsBundle\AustralTools;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Routing\RouterInterface;
 
 /**
  * Austral Generator File and Image url.
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
 class Generator
 {
-  /**
-   * @var UrlGeneratorInterface $urlGenerator
-   */
-  protected UrlGeneratorInterface $urlGenerator;
-
-  /**
-   * @var Mapping $mapping
-   */
-  protected Mapping $mapping;
-
   /**
    * @var string
    */
@@ -43,30 +37,33 @@ class Generator
   /**
    * Generator constructor.
    *
-   * @param UrlGeneratorInterface $urlGenerator
-   * @param Mapping $mapping
+   * @param RouterInterface $router
+   * @param Mapping<T> $mapping
    * @param string $defaultLocale
    */
-  public function __construct(UrlGeneratorInterface $urlGenerator, Mapping $mapping, string $defaultLocale = "en")
+  public function __construct(
+    #[Autowire(service: "router")] protected RouterInterface $router,
+    #[Autowire(service: "austral.entity.mapping")] protected Mapping $mapping,
+    string $defaultLocale = "en")
   {
-    $this->urlGenerator = $urlGenerator;
-    $this->mapping = $mapping;
     $this->defaultLocale = $defaultLocale;
   }
 
   /**
    * Download Url initializations
    *
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
-   * @param array $params
+   * @param array{urlPath?: string, urlType?: int}  $params
    *
    * @return string|null
    * @throws \Exception
    */
-  public function download(FileInterface $object, string $fieldname, array $params = array()): ?string
+  public function download(FileInterface $object, string $fieldname, array $params = []): ?string
   {
-    if($fieldFileMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
+    /** @var FieldFileMapping<T>|null $fieldFileMapping */
+    $fieldFileMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname);
+    if($fieldFileMapping)
     {
       $urlParameters = array(
         "entityKey"   =>  $fieldFileMapping->getSlugger(),
@@ -76,7 +73,7 @@ class Generator
         "extension"   =>  $fieldFileMapping->getFilenameExtension($object)
       );
 
-      if($this->urlGenerator->getRouteCollection()->get(AustralTools::getValueByKey($params, "urlPath", "austral_entity_file_download"))->getRequirement("_locale"))
+      if($this->router->getRouteCollection()->get(AustralTools::valueByKey($params, "urlPath", "austral_entity_file_download"))?->getRequirement("_locale"))
       {
         if($object instanceof TranslateMasterInterface)
         {
@@ -89,22 +86,22 @@ class Generator
       }
 
       return $this->getObjectFilePath($fieldFileMapping, $object) ? $this->generateUrl(
-        AustralTools::getValueByKey($params, "urlPath", "austral_entity_file_download"),
+        AustralTools::valueByKey($params, "urlPath", "austral_entity_file_download"),
         $urlParameters,
-        AustralTools::getValueByKey($params, "urlType", UrlGeneratorInterface::ABSOLUTE_PATH)
+        AustralTools::valueByKey($params, "urlType", UrlGeneratorInterface::ABSOLUTE_PATH)
       ) : null;
     }
     return null;
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
    * @param string|null $mode
    * @param int|null $width
    * @param int|null $height
    * @param string|null $type
-   * @param array $params
+   * @param array{urlPath?: string, urlType?: int, webp?: mixed} $params
    *
    * @return string|null
    * @throws \Exception
@@ -113,21 +110,22 @@ class Generator
     string $fieldname,
     ?string $type = "original",
     ?string $mode = "resize",
-    int $width = null,
-    int $height = null,
-    array $params = array()
+    ?int $width = null,
+    ?int $height = null,
+    array $params = []
   ): ?string {
 
     $type = $type ? : "original";
     $mode = $mode ? : "resize";
 
-    if(strpos($mode, "-") === false)
+    if(!str_contains($mode, "-"))
     {
       $mode .= "-ratio";
     }
 
-    /** @var FieldFileMapping $fieldFileMapping */
-    if($fieldFileMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
+    /** @var FieldFileMapping<T>|null $fieldFileMapping */
+    $fieldFileMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname);
+    if($fieldFileMapping)
     {
       $urlParameters = array(
         "entityKey"   =>  $fieldFileMapping->getSlugger(),
@@ -142,7 +140,7 @@ class Generator
       );
 
 
-      if($this->urlGenerator->getRouteCollection()->get(AustralTools::getValueByKey($params, "urlPath", "austral_entity_file_thumbnail"))->getRequirement("_locale"))
+      if($this->router->getRouteCollection()->get(AustralTools::valueByKey($params, "urlPath", "austral_entity_file_thumbnail"))?->getRequirement("_locale"))
       {
         if($object instanceof TranslateMasterInterface)
         {
@@ -155,9 +153,9 @@ class Generator
       }
 
       return $this->getObjectFilePath($fieldFileMapping, $object) ? $this->generateUrl(
-        AustralTools::getValueByKey($params, "urlPath", "austral_entity_file_thumbnail"),
+        AustralTools::valueByKey($params, "urlPath", "austral_entity_file_thumbnail"),
         $urlParameters,
-        AustralTools::getValueByKey($params, "urlType", UrlGeneratorInterface::ABSOLUTE_PATH)
+        AustralTools::valueByKey($params, "urlType", UrlGeneratorInterface::ABSOLUTE_PATH)
       ) : null;
     }
     return null;
@@ -165,19 +163,19 @@ class Generator
 
   /**
    * @param string $route
-   * @param array $parameters
+   * @param array<string, mixed> $parameters
    * @param int $referenceType
    *
    * @return string
    */
-  protected function generateUrl(string $route, array $parameters = array(), int $referenceType = UrlGeneratorInterface::ABSOLUTE_PATH): string
+  protected function generateUrl(string $route, array $parameters = [], int $referenceType = UrlGeneratorInterface::ABSOLUTE_PATH): string
   {
-    return $this->urlGenerator->generate($route, $parameters, $referenceType);
+    return $this->router->generate($route, $parameters, $referenceType);
   }
 
   /**
-   * @param FieldFileMapping $fieldFileMapping
-   * @param FileInterface|null $object
+   * @param FieldFileMapping<T> $fieldFileMapping
+   * @param FileInterface<T>|null $object
    *
    * @return string|null
    * @throws \Exception

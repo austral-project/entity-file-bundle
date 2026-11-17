@@ -8,8 +8,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Austral\EntityFileBundle\Listener;
-
+namespace Austral\EntityFileBundle\Bridge\Admin\Listener;
 
 use Austral\AdminBundle\Configuration\ConfigurationChecker;
 use Austral\AdminBundle\Configuration\ConfigurationCheckerValue;
@@ -19,51 +18,41 @@ use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\Configuration\CropperConfiguration;
 use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use function Symfony\Component\String\u;
 
 /**
  * Austral ConfigurationChecker Listener.
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
 class ConfigurationCheckerListener
 {
 
+  protected string $configurationCheckerEventClass = 'Austral\AdminBundle\Event\ConfigurationCheckerEvent';
+  protected string $configurationCheckerClass = 'Austral\AdminBundle\Configuration\ConfigurationChecker';
+  protected string $configurationCheckerValueClass = 'Austral\AdminBundle\Configuration\ConfigurationCheckerValue';
   /**
-   * @var Mapping
-   */
-  protected Mapping $mapping;
-
-  /**
-   * @var UploadsConfiguration
-   */
-  protected UploadsConfiguration $uploadsConfiguration;
-
-  /**
-   * @var CropperConfiguration
-   */
-  protected CropperConfiguration $cropperConfiguration;
-
-  /**
-   * @param Mapping $mapping
+   * @param Mapping<T> $mapping
    * @param UploadsConfiguration $uploadsConfiguration
    * @param CropperConfiguration $cropperConfiguration
    */
-  public function __construct(Mapping $mapping, UploadsConfiguration $uploadsConfiguration, CropperConfiguration $cropperConfiguration)
+  public function __construct(
+    #[Autowire(service: "austral.entity.mapping")] protected Mapping $mapping,
+    #[Autowire(service: "austral.entity_file.uploads.config")] protected UploadsConfiguration $uploadsConfiguration,
+    #[Autowire(service: "austral.entity_file.cropper.config")] protected CropperConfiguration $cropperConfiguration
+  )
   {
-    $this->mapping = $mapping;
-    $this->uploadsConfiguration = $uploadsConfiguration;
-    $this->cropperConfiguration = $cropperConfiguration;
   }
 
   /**
    * @param ConfigurationCheckerEvent $configurationCheckerEvent
    */
-  public function configurationChecker(ConfigurationCheckerEvent $configurationCheckerEvent)
+  public function configurationChecker(ConfigurationCheckerEvent $configurationCheckerEvent): void
   {
-
     $configurationChecker = $configurationCheckerEvent->getConfigurationChecker();
-
     $configurationCheckerUploads = $configurationCheckerEvent->addConfiguration("uploads", $configurationChecker)
       ->setName("configuration.check.uploads.title")
       ->setIsTranslatable(true)
@@ -74,11 +63,11 @@ class ConfigurationCheckerListener
     $this->createConfigurationByKeyConfigDefault($configurationCheckerUploads, "default_file", $this->uploadsConfiguration->getConfig("default_image"));
 
     /**
-     * @var EntityMapping $entityMapping
+     * @var EntityMapping<T> $entityMapping
      */
     foreach($this->mapping->getEntitiesMapping() as $entityMapping)
     {
-      /** @var FieldFileMapping $fieldFileMapping */
+      /** @var FieldFileMapping<T> $fieldFileMapping */
       foreach ($entityMapping->getFieldsMappingByClass(FieldFileMapping::class) as $fieldFileMapping)
       {
         $this->createConfigurationByKeyConfig($configurationCheckerUploads, $entityMapping, $fieldFileMapping);
@@ -93,7 +82,7 @@ class ConfigurationCheckerListener
    *
    * @return $this
    */
-  protected function createConfigurationByKeyConfigDefault(ConfigurationChecker $configurationCheckerUploads, string $keyConfig, array $config): ConfigurationCheckerListener
+  protected function createConfigurationByKeyConfigDefault(ConfigurationChecker $configurationCheckerUploads, string $keyConfig, array $config): self
   {
     $configurationCheckerDefault = new ConfigurationChecker($keyConfig);
     $configurationCheckerDefault->setName("configuration.check.uploads.{$keyConfig}.title")
@@ -107,12 +96,12 @@ class ConfigurationCheckerListener
 
   /**
    * @param ConfigurationChecker $configurationCheckerUploads
-   * @param EntityMapping $entityMapping
-   * @param FieldFileMapping $fieldFileMapping
+   * @param EntityMapping<T> $entityMapping
+   * @param FieldFileMapping<T> $fieldFileMapping
    *
    * @return $this
    */
-  protected function createConfigurationByKeyConfig(ConfigurationChecker $configurationCheckerUploads, EntityMapping $entityMapping, FieldFileMapping $fieldFileMapping): ConfigurationCheckerListener
+  protected function createConfigurationByKeyConfig(ConfigurationChecker $configurationCheckerUploads, EntityMapping $entityMapping, FieldFileMapping $fieldFileMapping): self
   {
     $configurationCheckerDefault = new ConfigurationChecker("{$entityMapping->slugger}_{$fieldFileMapping->getFieldname()}");
     $configurationCheckerDefault->setName($entityMapping->entityClass)
@@ -190,11 +179,10 @@ class ConfigurationCheckerListener
    * @param ConfigurationChecker $configurationCheckerDefault
    * @param string $keyConfig
    * @param string $keyname
-   * @param string $fieldname
    *
    * @return $this
    */
-  protected function createConfigurationCheckerValues(ConfigurationChecker $configurationCheckerDefault, string $keyConfig, string $keyname, string $fieldname): ConfigurationCheckerListener
+  protected function createConfigurationCheckerValues(ConfigurationChecker $configurationCheckerDefault, string $keyConfig, string $keyname): self
   {
     foreach(array('size.max', "mimeTypes") as $keyValue)
     {

@@ -11,179 +11,152 @@
 namespace Austral\EntityFileBundle\Listener;
 
 
-use Austral\EntityBundle\Annotation\AustralEntityAnnotationInterface;
-use Austral\EntityBundle\EntityAnnotation\EntityAnnotations;
+use Austral\EntityBundle\EntityAttributes\EntityAttributes;
 use Austral\EntityBundle\Event\EntityMappingEvent;
 use Austral\EntityBundle\Mapping\EntityMapping;
-use Austral\EntityFileBundle\Annotation\Cropper;
-use Austral\EntityFileBundle\Annotation\Croppers;
-use Austral\EntityFileBundle\Annotation\ImageSize;
-use Austral\EntityFileBundle\Annotation\Path;
-use Austral\EntityFileBundle\Annotation\EntityFileAnnotationInterface;
-use Austral\EntityFileBundle\Annotation\UploadParameters;
+use Austral\EntityFileBundle\Attribute as AustralFile;
 use Austral\EntityFileBundle\Configuration\CropperConfiguration;
 use Austral\EntityFileBundle\Configuration\ImageSizeConfiguration;
 use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Austral EntityAnnotation Listener.
+ * Austral EntityAttribute Listener.
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  */
 class EntityMappingListener
 {
-
-  /**
-   * @var ContainerInterface
-   */
-  protected ContainerInterface $container;
-
-  /**
-   * @var UploadsConfiguration
-   */
-  protected UploadsConfiguration $uploadsConfiguration;
-
-  /**
-   * @var CropperConfiguration
-   */
-  protected CropperConfiguration $cropperConfiguration;
-
-  /**
-   * @var ImageSizeConfiguration
-   */
-  protected ImageSizeConfiguration $imageSizeConfiguration;
-
   /**
    * @param ContainerInterface $container
    * @param UploadsConfiguration $uploadsConfiguration
    * @param CropperConfiguration $cropperConfiguration
    * @param ImageSizeConfiguration $imageSizeConfiguration
    */
-  public function __construct(ContainerInterface $container,
-    UploadsConfiguration $uploadsConfiguration,
-    CropperConfiguration $cropperConfiguration,
-    ImageSizeConfiguration $imageSizeConfiguration
+  public function __construct(
+
+    #[Autowire(service: "service_container")] protected ContainerInterface $container,
+    #[Autowire(service: "austral.entity_file.uploads.config")] protected UploadsConfiguration $uploadsConfiguration,
+    #[Autowire(service: "austral.entity_file.cropper.config")] protected CropperConfiguration $cropperConfiguration,
+    #[Autowire(service: "austral.entity_file.image_size.config")] protected ImageSizeConfiguration $imageSizeConfiguration,
   )
   {
-    $this->container = $container;
-    $this->uploadsConfiguration = $uploadsConfiguration;
-    $this->cropperConfiguration = $cropperConfiguration;
-    $this->imageSizeConfiguration = $imageSizeConfiguration;
   }
 
 
   /**
-   * @param EntityMappingEvent $entityAnnotationEvent
+   * @param EntityMappingEvent<T> $entityAttributeEvent
    *
    * @return void
    * @throws \Exception
    */
-  public function mapping(EntityMappingEvent $entityAnnotationEvent)
+  public function mapping(EntityMappingEvent $entityAttributeEvent): void
   {
-    $initialiseEntitesAnnotations = $entityAnnotationEvent->getEntitiesAnnotations();
+    $initialiseEntitesAttributes = $entityAttributeEvent->getEntitiesAttributes();
 
     /**
-     * @var EntityAnnotations $entityAnnotation
+     * @var EntityAttributes<T> $entityAttribute
      */
-    foreach($initialiseEntitesAnnotations->all() as $entityAnnotation)
+    foreach($initialiseEntitesAttributes->all() as $entityAttribute)
     {
-      foreach($entityAnnotation->getFieldsAnnotations() as $fieldname => $annotations)
+      foreach($entityAttribute->getFieldsAttributes() as $fieldname => $attributes)
       {
-        $annotationsToFile = [];
-        /** @var AustralEntityAnnotationInterface $annotation */
-        foreach($annotations as $annotation)
+        $attributesEnabled = [];
+        foreach($attributes as $attribute)
         {
-          if(AustralTools::usedImplements($annotation, EntityFileAnnotationInterface::class))
+          if(AustralTools::usedImplements($attribute, AustralFile\EntityFileAttributeInterface::class))
           {
-            $annotationsToFile[$annotation->getClassname()] = $annotation;
+            $attributesEnabled[$attribute->getClassname()] = $attribute;
           }
         }
 
-        if(count($annotationsToFile) > 0)
+        if(count($attributesEnabled) > 0)
         {
-          if(!$entityMapping = $entityAnnotationEvent->getMapping()->getEntityMapping($entityAnnotation->getClassname()))
+          if(!$entityMapping = $entityAttributeEvent->getMapping()->getEntityMapping($entityAttribute->getClassname()))
           {
-            $entityMapping = new EntityMapping($entityAnnotation->getClassname(), $entityAnnotation->getSlugger());
+            $entityMapping = new EntityMapping($entityAttribute->getClassname(), $entityAttribute->getSlugger());
           }
-          if(!array_key_exists(UploadParameters::class, $annotationsToFile))
+          if(!array_key_exists(AustralFile\UploadParameters::class, $attributesEnabled))
           {
-            $annotationsToFile[UploadParameters::class] = new UploadParameters("default_image");
-            $annotationsToFile[UploadParameters::class]->keyname = $fieldname;
+            $attributesEnabled[AustralFile\UploadParameters::class] = new AustralFile\UploadParameters("default_image");
+            $attributesEnabled[AustralFile\UploadParameters::class]->keyname = $fieldname;
           }
-          if($annotationsToFile[UploadParameters::class]->configName)
+          if($attributesEnabled[AustralFile\UploadParameters::class]->configName)
           {
-            if(!$annotationsToFile[UploadParameters::class]->mimeTypes)
+            if(!$attributesEnabled[AustralFile\UploadParameters::class]->mimeTypes)
             {
-              $annotationsToFile[UploadParameters::class]->mimeTypes = $this->uploadsConfiguration->get("{$annotationsToFile[UploadParameters::class]->configName}.mimeTypes", array());
+              $attributesEnabled[AustralFile\UploadParameters::class]->mimeTypes = $this->uploadsConfiguration->get("{$attributesEnabled[AustralFile\UploadParameters::class]->configName}.mimeTypes", []);
             }
-            if(!$annotationsToFile[UploadParameters::class]->sizeMax)
+            if(!$attributesEnabled[AustralFile\UploadParameters::class]->sizeMax)
             {
-              $annotationsToFile[UploadParameters::class]->sizeMax = $this->uploadsConfiguration->get("{$annotationsToFile[UploadParameters::class]->configName}.size.max", null);
+              $attributesEnabled[AustralFile\UploadParameters::class]->sizeMax = $this->uploadsConfiguration->get("{$attributesEnabled[AustralFile\UploadParameters::class]->configName}.size.max", null);
             }
-            if(!$annotationsToFile[UploadParameters::class]->isRequired)
+            if(!$attributesEnabled[AustralFile\UploadParameters::class]->isRequired)
             {
-              $annotationsToFile[UploadParameters::class]->isRequired = $this->uploadsConfiguration->get("{$annotationsToFile[UploadParameters::class]->configName}.required", false);
+              $attributesEnabled[AustralFile\UploadParameters::class]->isRequired = $this->uploadsConfiguration->get("{$attributesEnabled[AustralFile\UploadParameters::class]->configName}.required", false);
             }
-            if(!$annotationsToFile[UploadParameters::class]->errorMaxSize)
+            if(!$attributesEnabled[AustralFile\UploadParameters::class]->errorMaxSize)
             {
-              $annotationsToFile[UploadParameters::class]->errorMaxSize = $this->uploadsConfiguration->get("{$annotationsToFile[UploadParameters::class]->configName}.errors.maxSize", "file.errors.maxSize");
+              $attributesEnabled[AustralFile\UploadParameters::class]->errorMaxSize = $this->uploadsConfiguration->get("{$attributesEnabled[AustralFile\UploadParameters::class]->configName}.errors.maxSize", "file.errors.maxSize");
             }
-            if(!$annotationsToFile[UploadParameters::class]->errorMimeTypes)
+            if(!$attributesEnabled[AustralFile\UploadParameters::class]->errorMimeTypes)
             {
-              $annotationsToFile[UploadParameters::class]->errorMimeTypes = $this->uploadsConfiguration->get("{$annotationsToFile[UploadParameters::class]->configName}.errors.mimeTypes", "file.errors.mimeTypes");
+              $attributesEnabled[AustralFile\UploadParameters::class]->errorMimeTypes = $this->uploadsConfiguration->get("{$attributesEnabled[AustralFile\UploadParameters::class]->configName}.errors.mimeTypes", "file.errors.mimeTypes");
             }
           }
 
-          if(!array_key_exists(Path::class, $annotationsToFile))
+          if(!array_key_exists(AustralFile\Path::class, $attributesEnabled))
           {
-            $annotationsToFile[Path::class] = new Path();
-            $annotationsToFile[Path::class]->keyname = $fieldname;
+            $attributesEnabled[AustralFile\Path::class] = new AustralFile\Path();
+            $attributesEnabled[AustralFile\Path::class]->keyname = $fieldname;
           }
-          $annotationsToFile[Path::class]->upload = $this->replacePath($annotationsToFile[Path::class]->upload, $entityAnnotation->getSlugger());
-          $annotationsToFile[Path::class]->thumbnail = $this->replacePath($annotationsToFile[Path::class]->thumbnail, $entityAnnotation->getSlugger());
+          $attributesEnabled[AustralFile\Path::class]->upload = $this->replacePath($attributesEnabled[AustralFile\Path::class]->upload, $entityAttribute->getSlugger());
+          $attributesEnabled[AustralFile\Path::class]->thumbnail = $this->replacePath($attributesEnabled[AustralFile\Path::class]->thumbnail, $entityAttribute->getSlugger());
 
-          if(array_key_exists(ImageSize::class, $annotationsToFile))
+          if(array_key_exists(AustralFile\ImageSize::class, $attributesEnabled))
           {
-            if(!$annotationsToFile[ImageSize::class]->configName)
+            if(!$attributesEnabled[AustralFile\ImageSize::class]->configName)
             {
-              $annotationsToFile[ImageSize::class]->configName = "default";
+              $attributesEnabled[AustralFile\ImageSize::class]->configName = "default";
             }
-            if(!$annotationsToFile[ImageSize::class]->widthMin === null)
+            if(!$attributesEnabled[AustralFile\ImageSize::class]->widthMin)
             {
-              $annotationsToFile[ImageSize::class]->widthMin = $this->imageSizeConfiguration->get("{$annotationsToFile[ImageSize::class]->configName}.width.min", null);
+              $attributesEnabled[AustralFile\ImageSize::class]->widthMin = $this->imageSizeConfiguration->get("{$attributesEnabled[AustralFile\ImageSize::class]->configName}.width.min", null);
             }
-            if(!$annotationsToFile[ImageSize::class]->widthMax === null)
+            if(!$attributesEnabled[AustralFile\ImageSize::class]->widthMax)
             {
-              $annotationsToFile[ImageSize::class]->widthMax = $this->imageSizeConfiguration->get("{$annotationsToFile[ImageSize::class]->configName}.width.max", null);
+              $attributesEnabled[AustralFile\ImageSize::class]->widthMax = $this->imageSizeConfiguration->get("{$attributesEnabled[AustralFile\ImageSize::class]->configName}.width.max", null);
             }
-            if(!$annotationsToFile[ImageSize::class]->heightMin === null)
+            if(!$attributesEnabled[AustralFile\ImageSize::class]->heightMin)
             {
-              $annotationsToFile[ImageSize::class]->heightMin = $this->imageSizeConfiguration->get("{$annotationsToFile[ImageSize::class]->configName}.height.min", null);
+              $attributesEnabled[AustralFile\ImageSize::class]->heightMin = $this->imageSizeConfiguration->get("{$attributesEnabled[AustralFile\ImageSize::class]->configName}.height.min", null);
             }
-            if(!$annotationsToFile[ImageSize::class]->heightMax === null)
+            if(!$attributesEnabled[AustralFile\ImageSize::class]->heightMax)
             {
-              $annotationsToFile[ImageSize::class]->heightMax = $this->imageSizeConfiguration->get("{$annotationsToFile[ImageSize::class]->configName}.height.max", null);
+              $attributesEnabled[AustralFile\ImageSize::class]->heightMax = $this->imageSizeConfiguration->get("{$attributesEnabled[AustralFile\ImageSize::class]->configName}.height.max", null);
             }
           }
-          if(array_key_exists(Croppers::class, $annotationsToFile))
+          if(array_key_exists(AustralFile\Croppers::class, $attributesEnabled))
           {
-            if(!$annotationsToFile[Croppers::class]->croppers)
+            if(!$attributesEnabled[AustralFile\Croppers::class]->croppers)
             {
-              unset($annotationsToFile[Croppers::class]);
+              unset($attributesEnabled[AustralFile\Croppers::class]);
             }
             else
             {
-              foreach($annotationsToFile[Croppers::class]->croppers as $key => $cropper)
+              foreach($attributesEnabled[AustralFile\Croppers::class]->croppers as $key => $cropper)
               {
-                if(!$cropper instanceof Cropper)
+                if(!$cropper instanceof AustralFile\Cropper)
                 {
                   if(!$this->cropperConfiguration->getConfig($cropper))
                   {
                     throw new \Exception("{$cropper} cropper name is not defined !!!");
                   }
-                  $cropperObject = new Cropper(
+                  $cropperObject = new AustralFile\Cropper(
                     $this->cropperConfiguration->get("{$cropper}.name", null),
                     $this->cropperConfiguration->get("{$cropper}.picto", null),
                     $this->cropperConfiguration->get("{$cropper}.ratio", null)
@@ -194,19 +167,28 @@ class EntityMappingListener
                 {
                   $cropperObject = $cropper;
                 }
-                unset($annotationsToFile[Croppers::class]->croppers[$key]);
-                $annotationsToFile[Croppers::class]->croppers[$cropperObject->key] = $cropperObject;
+                unset($attributesEnabled[AustralFile\Croppers::class]->croppers[$key]);
+                $attributesEnabled[AustralFile\Croppers::class]->croppers[$cropperObject->key] = $cropperObject;
               }
             }
           }
 
-          $entityMapping->addFieldMapping($fieldname, new FieldFileMapping($annotationsToFile[UploadParameters::class],
-              $annotationsToFile[Path::class],
-              array_key_exists(ImageSize::class, $annotationsToFile) ? $annotationsToFile[ImageSize::class] : null,
-              array_key_exists(Croppers::class, $annotationsToFile) ? $annotationsToFile[Croppers::class] : null
-            )
+          /** @var AustralFile\UploadParameters $attributesUploadParameters */
+          $attributesUploadParameters = $attributesEnabled[AustralFile\UploadParameters::class];
+
+          /** @var AustralFile\Path $attributesPath */
+          $attributesPath = $attributesEnabled[AustralFile\Path::class];
+
+          /** @var FieldFileMapping<T> $fieldFileMapping */
+          $fieldFileMapping = new FieldFileMapping(
+            $attributesUploadParameters,
+            $attributesPath,
+            array_key_exists(AustralFile\ImageSize::class, $attributesEnabled) ? $attributesEnabled[AustralFile\ImageSize::class] : null,
+            array_key_exists(AustralFile\Croppers::class, $attributesEnabled) ? $attributesEnabled[AustralFile\Croppers::class] : null
           );
-          $entityAnnotationEvent->getMapping()->addEntityMapping($entityAnnotation->getClassname(), $entityMapping);
+
+          $entityMapping->addFieldMapping($fieldname, $fieldFileMapping);
+          $entityAttributeEvent->getMapping()->addEntityMapping($entityAttribute->getClassname(), $entityMapping);
         }
       }
     }
@@ -223,7 +205,8 @@ class EntityMappingListener
     preg_match_all("|%(\S+)%|iuU", $path, $matches, PREG_SET_ORDER);
     foreach($matches as $match)
     {
-      $path = str_replace($match[0], $this->container->getParameter($match[1]), $path);
+      $parameter = $this->container->getParameter($match[1]);
+      $path = $parameter && is_string($parameter) ? str_replace($match[0], $parameter, $path) : $path;
     }
     return str_replace("@entity_slugger_case@", $entitySlugger, $path);
   }

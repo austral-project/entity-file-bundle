@@ -33,7 +33,7 @@ Class CropperConfiguration extends BaseConfiguration
   /**
    * Initialize the service
    *
-   * @param array Config
+   * @param array<mixed> $config
    */
   public function __construct(array $config)
   {

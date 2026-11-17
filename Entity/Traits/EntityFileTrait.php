@@ -9,37 +9,48 @@
  */
 namespace Austral\EntityFileBundle\Entity\Traits;
 
-use Austral\EntityBundle\Entity\Interfaces\FileInterface;
+use Austral\EntityBundle\Entity\Entity;
+use Austral\Contracts\File\FileInterface;
 use Austral\ToolsBundle\AustralTools;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * Austral Entity File Trait.
+ * @template T of object
+ *
+ * @phpstan-require-implements FileInterface<T>
+ * @phpstan-require-extends Entity<T>
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  */
 trait EntityFileTrait
 {
 
   /**
-   * @var array
+   * @var array<string|int, UploadedFile|null>
    */
-  protected array $uploadFiles = array();
+  protected array $uploadFiles = [];
 
   /**
-   * @var array
+   * @var array<string, bool>
    */
-  protected array $deleteFiles = array();
+  protected array $deleteFiles = [];
 
   /**
-   * @return int|string
+   * @inheritDoc
    */
-  public function getObjectIdToFile()
+  abstract public function getId(): string;
+
+  /**
+   * @inheritDoc
+   */
+  public function getObjectIdToFile(): string
   {
     return $this->getId();
   }
 
   /**
-   * @return array
+   * @inheritDoc
    */
   public function removeUploadFiles(): array
   {
@@ -55,31 +66,33 @@ trait EntityFileTrait
   }
 
   /**
-   * @param string $fieldname
-   * @param UploadedFile|null $uploadedFile
-   *
-   * @return FileInterface
+   * @inheritDoc
    */
-  public function setUploadFileByFieldname(string $fieldname, ?UploadedFile $uploadedFile = null): FileInterface
+  public function setUploadFiles(array $uploadFiles = []): self
+  {
+    $this->uploadFiles = $uploadFiles;
+    return $this;
+  }
+
+  /**
+   * @inheritDoc
+   */
+  public function setUploadFileByFieldname(string $fieldname, ?UploadedFile $uploadedFile = null): self
   {
     $this->uploadFiles[$fieldname] = $uploadedFile;
     return $this;
   }
 
   /**
-   * @param string $fieldname
-   *
-   * @return UploadedFile|null
+   * @inheritDoc
    */
   public function getUploadFileByFieldname(string $fieldname): ?UploadedFile
   {
-    return AustralTools::getValueByKey($this->uploadFiles, $fieldname);
+    return AustralTools::valueByKey($this->uploadFiles, $fieldname);
   }
 
   /**
-   * @param string $fieldname
-   *
-   * @return bool
+   * @inheritDoc
    */
   public function getDeleteFileByFieldname(string $fieldname): bool
   {
@@ -87,19 +100,16 @@ trait EntityFileTrait
   }
 
   /**
-   * @param string $fieldname
-   * @param $value
-   *
-   * @return FileInterface
+   * @inheritDoc
    */
-  public function setDeleteFileByFieldname(string $fieldname, $value): FileInterface
+  public function setDeleteFileByFieldname(string $fieldname, mixed $value): self
   {
     $this->deleteFiles[$fieldname] = $value;
     return $this;
   }
 
   /**
-   * @return array
+   * @inheritDoc
    */
   public function getDeleteFiles(): array
   {
@@ -107,11 +117,9 @@ trait EntityFileTrait
   }
 
   /**
-   * @param $deleteFiles
-   *
-   * @return FileInterface
+   * @inheritDoc
    */
-  public function setDeleteFiles($deleteFiles): FileInterface
+  public function setDeleteFiles($deleteFiles): self
   {
     $this->deleteFiles = $deleteFiles;
     return $this;

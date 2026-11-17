@@ -1,6 +1,6 @@
 <?php
 /*
- * This file is part of the Austral Form Bundle package.
+ * This file is part of the Austral EntityFile Bundle package.
  *
  * (c) Austral <support@austral.dev>
  *
@@ -18,5 +18,7 @@ use Symfony\Component\Validator\Constraint;
 #[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_METHOD | \Attribute::IS_REPEATABLE)]
 class SvgSecurity extends Constraint
 {
-  public string $message = 'Le fichier SVG contient du code potentiellement dangereux (scripts ou évènements JavaScript).';
+  public string $unreadableMessage = 'The SVG file cannot be read.';
+
+  public string $message = 'The SVG file contains potentially dangerous code (scripts or JavaScript events).';
 }

@@ -1,0 +1,11 @@
+services:
+  _defaults:
+    autowire:     true
+    public:       false
+
+  ##### Command Compress Picture
+  austral.file.compress.command:
+    public:       false
+    class:        Austral\EntityFileBundle\Command\CompressCommand
+    tags:
+      - { name: console.command, command: "austral:file:compress" }

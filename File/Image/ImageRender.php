@@ -12,46 +12,24 @@ namespace Austral\EntityFileBundle\File\Image;
 
 use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
-use Austral\EntityBundle\Entity\Interfaces\FileInterface;
+use Austral\Contracts\File\FileInterface;
+use Austral\EntityFileBundle\File\Compression\Compression;
 use Austral\EntityFileBundle\File\Cropper\Cropper;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
 
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Austral Image Render.
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
 class ImageRender
 {
-
-  /**
-   * @var ContainerInterface
-   */
-  protected ContainerInterface $container;
-
-  /**
-   * @var Image
-   */
-  protected Image $imageLib;
-
-  /**
-   * @var Mapping
-   */
-  protected Mapping $mapping;
-
-  /**
-   * @var UploadsConfiguration
-   */
-  protected UploadsConfiguration $uploadsConfiguration;
-
-  /**
-   * @var Cropper
-   */
-  protected Cropper $cropper;
 
   /**
    * @var Filesystem
@@ -61,30 +39,31 @@ class ImageRender
   /**
    * ImageRender constructor.
    *
-   * @param ContainerInterface $container
-   * @param Mapping $mapping
-   * @param Image $imageLib
+   * @param Mapping<T> $mapping
+   * @param Image<T> $imageLib
    * @param UploadsConfiguration $uploadsConfiguration
-   * @param Cropper $cropper
+   * @param Cropper<T> $cropper
+   * @param Compression $compression
    */
-  public function __construct(ContainerInterface $container, Mapping $mapping, Image $imageLib, UploadsConfiguration $uploadsConfiguration, Cropper $cropper)
+  public function __construct(
+    #[Autowire(service: "austral.entity.mapping")] protected Mapping $mapping,
+    #[Autowire(service: "austral.entity_file.image")] protected Image $imageLib,
+    #[Autowire(service: "austral.entity_file.uploads.config")] protected UploadsConfiguration $uploadsConfiguration,
+    #[Autowire(service: "austral.entity_file.cropper")] protected Cropper $cropper,
+    #[Autowire(service: "austral.entity_file.compression")] protected Compression $compression,
+  )
   {
-    $this->container = $container;
-    $this->mapping = $mapping;
-    $this->imageLib = $imageLib;
     $this->filesystem = new Filesystem();
-    $this->uploadsConfiguration = $uploadsConfiguration;
-    $this->cropper = $cropper;
   }
 
   /**
    * @param string $entityKey
-   * @param string|integer $id
+   * @param string $id
    * @param string $fieldname
    * @param string $type
    * @param string $mode
-   * @param float|null $width
-   * @param float|null $height
+   * @param int|null $width
+   * @param int|null $height
    * @param string|null $value
    * @param string|null $extension
    * @param bool $force
@@ -92,13 +71,13 @@ class ImageRender
    * @return string
    * @throws \Exception
    */
-  public function initRender(string $entityKey, $id, string $fieldname, string $type = "original", string $mode = "resize", float $width = null, float $height= null, string $value = null, string $extension = null, bool $force = false): string
+  public function initRender(string $entityKey, string $id, string $fieldname, string $type = "original", string $mode = "resize", ?int $width = null, ?int $height= null, ?string $value = null, ?string $extension = null, bool $force = false): string
   {
     $modeResize = null;
-    if(strpos($mode, "resize") !== false)
+    if(str_contains($mode, "resize"))
     {
       $modeResize = "ratio";
-      if(strpos($mode, "-") !== false)
+      if(str_contains($mode, "-"))
       {
         list($mode, $modeResize) = explode("-", $mode);
       }
@@ -115,14 +94,15 @@ class ImageRender
       }
     }
 
-    /** @var FieldFileMapping $fieldFileMapping */
-    $fieldFileMapping = $this->mapping->getFieldsMappingByFieldname($object ?? $entityKey, FieldFileMapping::class, $fieldname);
+    /** @var FieldFileMapping<T> $fieldFileMapping */
+    $fieldFileMapping = $this->mapping->getFieldsMappingByFieldname($entityKey, FieldFileMapping::class, $fieldname);
 
     $object = null;
     if(!$value || !$extension)
     {
-      /** @var FileInterface $object */
-      if($object = $this->mapping->getObject($entityKey, $id))
+      /** @var FileInterface<T>|null $object */
+      $object = $this->mapping->getObject($entityKey, $id);
+      if($object)
       {
         $value = $value ? : $fieldFileMapping->getFilenameWithoutExtension($object);
         $extension = $extension ? : $fieldFileMapping->getFilenameExtension($object);
@@ -146,6 +126,7 @@ class ImageRender
 
     if(!$object)
     {
+      /** @var FileInterface<T>|null $object */
       $object = $this->mapping->getObject($entityKey, $id);
       if(!$object)
       {
@@ -225,7 +206,7 @@ class ImageRender
     else
     {
       $this->filesystem->copy($reelFilePath, $imageThumbnailPathSave);
-      $this->container->get('austral.entity_file.compression')->compress($imageThumbnailPathSave, array("webp"));
+      $this->compression->compress($imageThumbnailPathSave, array("webp"));
       $imageThumbnailPath = $reelFilePath;
     }
     return $imageThumbnailPath;

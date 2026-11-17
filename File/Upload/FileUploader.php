@@ -10,42 +10,38 @@
 
 namespace Austral\EntityFileBundle\File\Upload;
 
-use Austral\EntityBundle\Entity\EntityInterface;
 use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\Configuration\CropperConfiguration;
-use Austral\EntityBundle\Entity\Interfaces\FileInterface;
+use Austral\Contracts\File\FileInterface;
 
 use Austral\EntityFileBundle\File\Cropper\Cropper;
 use Austral\EntityFileBundle\File\Image\Image;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
 use Exception;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Symfony\Component\String\Slugger\AsciiSlugger;
 
 /**
  * Austral File Uploads services.
+ * @template T of object
  *
  * @author Matthieu Beurel <matthieu@austral.dev>
- *
  * @final
  */
 Class FileUploader
 {
 
   /**
-   * @var RequestStack
+   * @var Request|null
    */
-  protected $request;
-
-  /**
-   * @var Mapping
-   */
-  protected Mapping $mapping;
+  protected ?Request $request = null;
 
   /**
    * @var Filesystem
@@ -58,49 +54,40 @@ Class FileUploader
   protected AsciiSlugger $slugger;
 
   /**
-   * @var CropperConfiguration
-   */
-  protected CropperConfiguration $cropperConfiguration;
-
-  /**
-   * @var Cropper
-   */
-  protected Cropper $cropper;
-
-  /**
-   * @var Image
-   */
-  protected Image $image;
-
-  /**
    * UploadFiles constructor.
    *
-   * @param RequestStack $request
-   * @param Mapping $mapping
-   * @param Cropper $cropper
+   * @param Mapping<T> $mapping
+   * @param Cropper<T> $cropper
    * @param CropperConfiguration $cropperConfiguration
-   * @param Image $image
+   * @param Image<T> $image
    */
-  public function __construct(RequestStack $request,
-    Mapping $mapping,
-    Cropper $cropper,
-    CropperConfiguration $cropperConfiguration,
-    Image $image
+  public function __construct(
+    #[Autowire(service: "austral.entity.mapping")] protected Mapping $mapping,
+    #[Autowire(service: "austral.entity_file.cropper")] protected Cropper $cropper,
+    #[Autowire(service: "austral.entity_file.cropper.config")] protected CropperConfiguration $cropperConfiguration,
+    #[Autowire(service: "austral.entity_file.image")] protected Image $image,
   )
   {
-    $this->request = $request->getCurrentRequest();
     $this->filesystem = new Filesystem();
     $this->slugger = new AsciiSlugger();
-    $this->cropper = $cropper;
-    $this->cropperConfiguration = $cropperConfiguration;
-    $this->image = $image;
-    $this->mapping = $mapping;
-    return $this;
   }
 
   /**
+   * setRequest
+   *
+   * @param RequestStack $request
+   * @return $this
+   */
+  public function setRequest(RequestStack $request): static
+  {
+    $this->request = $request->getCurrentRequest();
+    return $this;
+  }
+
+
+  /**
    * @param FormInterface $form
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    *
    * @return bool
    * @throws Exception
@@ -111,14 +98,13 @@ Class FileUploader
     $requiredFileSuccess = true;
 
     /**
-     * @var string $fieldname
-     * @var FieldFileMapping $fieldFileMapping
+     * @var FieldFileMapping<T> $fieldFileMapping
      */
     foreach($this->mapping->getFieldsMappingByClass($object->getClassnameForMapping(), FieldFileMapping::class) as $fieldFileMapping)
     {
       if($fieldFileMapping->uploadParameters->isRequired && !$fieldFileMapping->getObjectFilePath($object))
       {
-        if(!array_key_exists($fieldFileMapping->getFieldname(), $uploadedFiles) || !($uploadedFiles[$fieldFileMapping->getFieldname()] instanceof UploadedFile))
+        if($fieldFileMapping->getFieldname() && (!array_key_exists($fieldFileMapping->getFieldname(), $uploadedFiles) || !($uploadedFiles[$fieldFileMapping->getFieldname()] instanceof UploadedFile)))
         {
           $requiredFileSuccess = false;
           $form->get($fieldFileMapping->getFieldname())->addError(new FormError("required"));
@@ -130,42 +116,36 @@ Class FileUploader
 
   /**
    * @param FormInterface $form
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    *
    * @return $this
    * @throws Exception
    */
-  public function uploadFiles(FormInterface $form, FileInterface $object): FileUploader
+  public function uploadFiles(FormInterface $form, FileInterface $object): self
   {
-    try {
-
-      /**
-       * @var string $fieldname
-       * @var FieldFileMapping $fieldFileMapping
-       */
-      foreach($this->mapping->getFieldsMappingByClass($object->getClassnameForMapping(), FieldFileMapping::class) as $fieldFileMapping)
+    /**
+     * @var FieldFileMapping<T> $fieldFileMapping
+     */
+    foreach($this->mapping->getFieldsMappingByClass($object->getClassnameForMapping(), FieldFileMapping::class) as $fieldFileMapping)
+    {
+      if($fieldFileMapping->getFieldname() && array_key_exists($fieldFileMapping->getFieldname(), $object->getUploadFiles()))
       {
-        if(array_key_exists($fieldFileMapping->getFieldname(), $object->getUploadFiles()))
+        if($object->getUploadFiles()[$fieldFileMapping->getFieldname()] instanceof UploadedFile)
         {
-          if($object->getUploadFiles()[$fieldFileMapping->getFieldname()] instanceof UploadedFile)
-          {
-            $this->uploadFile($fieldFileMapping, $object, $object->getUploadFiles()[$fieldFileMapping->getFieldname()]);
-          }
+          $this->uploadFile($fieldFileMapping, $object, $object->getUploadFiles()[$fieldFileMapping->getFieldname()]);
         }
-        $this->generateCrop($fieldFileMapping, $object);
-        if(array_key_exists($fieldFileMapping->getFieldname(), $object->getDeleteFiles()))
-        {
-          if($object->getDeleteFiles()[$fieldFileMapping->getFieldname()] && !$fieldFileMapping->uploadParameters->isRequired)
-          {
-            $this->deleteFileByFieldname($fieldFileMapping, $object)
-              ->deleteThumbnails($fieldFileMapping, $object);
-          }
-        }
-
       }
 
-    } catch(Exception $e) {
-      throw $e;
+      $this->generateCrop($fieldFileMapping, $object);
+
+      if($fieldFileMapping->getFieldname() && array_key_exists($fieldFileMapping->getFieldname(), $object->getDeleteFiles()))
+      {
+        if($object->getDeleteFiles()[$fieldFileMapping->getFieldname()] && !$fieldFileMapping->uploadParameters->isRequired)
+        {
+          $this->deleteFileByFieldname($fieldFileMapping, $object)
+            ->deleteThumbnails($fieldFileMapping, $object);
+        }
+      }
     }
     return $this;
   }
@@ -173,8 +153,8 @@ Class FileUploader
   /**
    * generateCrop
    *
-   * @param FieldFileMapping $fieldFileMapping
-   * @param FileInterface $object
+   * @param FieldFileMapping<T> $fieldFileMapping
+   * @param FileInterface<T> $object
    * @return $this
    * @throws Exception
    */
@@ -182,7 +162,7 @@ Class FileUploader
   {
     if(method_exists($object, "getGenerateCropperByKey") && $fieldFileMapping->croppers)
     {
-      if(array_key_exists($fieldFileMapping->getFieldname(), $object->getGenerateCropperByKey()))
+      if($fieldFileMapping->getFieldname() && array_key_exists($fieldFileMapping->getFieldname(), $object->getGenerateCropperByKey()))
       {
         foreach($object->getGenerateCropperByKey()[$fieldFileMapping->getFieldname()] as $cropperKey => $value)
         {
@@ -195,36 +175,36 @@ Class FileUploader
   }
 
   /**
-   * @param FieldFileMapping $fieldFileMapping
-   * @param FileInterface|EntityInterface $objectSource
-   * @param FileInterface|EntityInterface $objectDestination
+   * @param FieldFileMapping<T> $fieldFileMapping
+   * @param FileInterface<T> $objectSource
+   * @param FileInterface<T> $objectDestination
    *
    * @return $this
    * @throws Exception
    */
-  public function copyFilename(FieldFileMapping $fieldFileMapping, $objectSource, $objectDestination): FileUploader
+  public function copyFilename(FieldFileMapping $fieldFileMapping, FileInterface $objectSource, FileInterface $objectDestination): self
   {
     if($filenameSource = $fieldFileMapping->getObjectValue($objectSource))
     {
       $pathInfo = pathinfo($filenameSource);
       $originalFilenameValues = explode("__UNIQID__", $filenameSource);
-
-      $filenameDestination = AustralTools::getValueByKey($originalFilenameValues, 0, $filenameSource).uniqid("__UNIQID__").'.'.$pathInfo['extension'];
-
+      $filenameDestination = AustralTools::valueByKey($originalFilenameValues, 0, $filenameSource).
+        uniqid("__UNIQID__").'.'.
+        AustralTools::valueByKey($pathInfo, 'extension');
       $fieldFileMapping->setObjectValue($objectDestination, null, $filenameDestination);
     }
     return $this;
   }
 
   /**
-   * @param FieldFileMapping $fieldFileMapping
-   * @param FileInterface|EntityInterface $objectSource
-   * @param FileInterface|EntityInterface $objectDestination
+   * @param FieldFileMapping<T> $fieldFileMapping
+   * @param FileInterface<T> $objectSource
+   * @param FileInterface<T> $objectDestination
    *
-   * @return FileUploader
+   * @return $this
    * @throws Exception
    */
-  public function copyFile(FieldFileMapping $fieldFileMapping, $objectSource, $objectDestination): FileUploader
+  public function copyFile(FieldFileMapping $fieldFileMapping, FileInterface $objectSource, FileInterface $objectDestination): self
   {
     if($filenameSource = $fieldFileMapping->getObjectValue($objectSource))
     {
@@ -251,14 +231,14 @@ Class FileUploader
   }
 
   /**
-   * @param FieldFileMapping $fieldFileMapping
-   * @param FileInterface|EntityInterface $object
+   * @param FieldFileMapping<T> $fieldFileMapping
+   * @param FileInterface<T> $object
    * @param UploadedFile $uploadedFile
    *
    * @return $this
    * @throws Exception
    */
-  public function uploadFile(FieldFileMapping $fieldFileMapping, FileInterface $object, UploadedFile $uploadedFile): FileUploader
+  public function uploadFile(FieldFileMapping $fieldFileMapping, FileInterface $object, UploadedFile $uploadedFile): self
   {
     $uploadsPath = AustralTools::join(
       $fieldFileMapping->path->upload,
@@ -283,14 +263,14 @@ Class FileUploader
   }
 
   /**
-   * @param FieldFileMapping $fieldFileMapping
-   * @param FileInterface|EntityInterface $object
+   * @param FieldFileMapping<T> $fieldFileMapping
+   * @param FileInterface<T> $object
    * @param string|null $uploadsPath
    *
    * @return $this
    * @throws Exception
    */
-  public function deleteFileByFieldname(FieldFileMapping $fieldFileMapping, FileInterface $object, string $uploadsPath = null): FileUploader
+  public function deleteFileByFieldname(FieldFileMapping $fieldFileMapping, FileInterface $object, ?string $uploadsPath = null): self
   {
     if(!$uploadsPath)
     {
@@ -338,13 +318,13 @@ Class FileUploader
   }
 
   /**
-   * @param FieldFileMapping $fieldFileMapping
-   * @param FileInterface $object
+   * @param FieldFileMapping<T> $fieldFileMapping
+   * @param FileInterface<T> $object
    * @param string|null $subDir
    *
    * @return $this
    */
-  public function deleteThumbnails(FieldFileMapping $fieldFileMapping, FileInterface $object, string $subDir = null): FileUploader
+  public function deleteThumbnails(FieldFileMapping $fieldFileMapping, FileInterface $object, ?string $subDir = null): self
   {
     $thumbnailPath = AustralTools::join(
       $fieldFileMapping->path->thumbnail,

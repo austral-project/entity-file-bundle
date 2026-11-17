@@ -11,57 +11,39 @@
 namespace Austral\EntityFileBundle\Listener;
 
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
 
-use Austral\EntityBundle\Entity\Interfaces\FileInterface;
+use Austral\Contracts\File\FileInterface;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\EntityFileBundle\File\Upload\FileUploader;
 
+use Austral\Contracts\Translate\TranslateChildInterface;
 use Austral\ToolsBundle\AustralTools;
-use Doctrine\Bundle\DoctrineBundle\Attribute\AsDoctrineListener;
-use Doctrine\Common\EventArgs;
-use Doctrine\Common\EventSubscriber;
-use Doctrine\ORM\Event\LifecycleEventArgs;
+use Doctrine\Persistence\Event\LifecycleEventArgs;
 use Doctrine\ORM\Events;
+use Doctrine\Persistence\ObjectManager;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Austral Doctrine Listener.
+ * @template TObjectManager of ObjectManager
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
-#[AsDoctrineListener(event: 'preRemove', connection: 'default')]
-class DoctrineListener implements EventSubscriber
+class DoctrineListener
 {
 
   /**
-   * @var mixed
+   * DoctrineListener constructor
+   *
+   * @param Mapping<T> $mapping
+   * @param FileUploader<T> $fileUploader
    */
-  protected $name;
-
-  /**
-   * @var FileUploader
-   */
-  protected FileUploader $fileUploader;
-
-  /**
-   * @var Mapping
-   */
-  protected Mapping $mapping;
-
-  /**
-   * @var UploadsConfiguration
-   */
-  protected UploadsConfiguration $uploadsConfiguration;
-
-  /**
-   * DoctrineListener constructor.
-   */
-  public function __construct(Mapping $mapping, FileUploader $fileUploader)
+  public function __construct(
+    #[Autowire(service: "austral.entity.mapping")] protected Mapping $mapping,
+    #[Autowire(service: "austral.entity_file.uploader")] protected FileUploader $fileUploader)
   {
-    $this->mapping = $mapping;
-    $this->fileUploader = $fileUploader;
-    $parts = explode('\\', $this->getNamespace());
-    $this->name = end($parts);
   }
 
   /**
@@ -76,24 +58,25 @@ class DoctrineListener implements EventSubscriber
 
 
   /**
-   * @param LifecycleEventArgs $args
+   * @param LifecycleEventArgs<TObjectManager> $args
    *
    * @throws \Exception
    */
   public function preRemove(LifecycleEventArgs $args): void
   {
-    $ea = $this->getEventAdapter($args);
-    $object = $ea->getObject();
+    $object = $args->getObject();
     if(!$object instanceof FileInterface)
     {
-      if(AustralTools::usedImplements(get_class($object), "Austral\EntityBundle\Entity\Interfaces\TranslateChildInterface"))
+      if(AustralTools::usedImplements(get_class($object), "Austral\Contracts\Translate\TranslateChildInterface"))
       {
-        $object = $object->getMaster();
+        /** @var TranslateChildInterface<T> $childObject */
+        $childObject = $args->getObject();
+        $object = $childObject->getMaster();
       }
     }
     if($object instanceof FileInterface)
     {
-      /** @var FieldFileMapping $fieldFileMapping */
+      /** @var FieldFileMapping<T> $fieldFileMapping */
       foreach($this->mapping->getFieldsMappingByClass($object->getClassnameForMapping(), FieldFileMapping::class) as $fieldFileMapping)
       {
         $this->fileUploader->deleteFileByFieldname($fieldFileMapping, $object)
@@ -102,21 +85,4 @@ class DoctrineListener implements EventSubscriber
     }
   }
 
-  /**
-   * @param EventArgs $args
-   *
-   * @return EventArgs
-   */
-  protected function getEventAdapter(EventArgs $args)
-  {
-    return $args;
-  }
-
-  /**
-   * @return string
-   */
-  protected function getNamespace()
-  {
-    return __NAMESPACE__;
-  }
 }

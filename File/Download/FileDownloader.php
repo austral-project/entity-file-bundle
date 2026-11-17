@@ -10,14 +10,15 @@
 
 namespace Austral\EntityFileBundle\File\Download;
 
-
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityBundle\Entity\Interfaces\FileInterface;
+use Austral\Contracts\File\FileInterface;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Austral File Download.
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
@@ -25,39 +26,27 @@ class FileDownloader
 {
 
   /**
-   * @var ContainerInterface
+   * @var string|null
    */
-  protected ContainerInterface $container;
-
-  /**
-   * @var Mapping
-   */
-  protected Mapping $mapping;
-
-  /**
-   * @var string
-   */
-  protected string $objectFilePath;
+  protected ?string $objectFilePath = null;
 
   /**
    * @var string|null
    */
-  protected ?string $name;
+  protected ?string $name = null;
 
   /**
    * FileDownloader constructor.
    *
-   * @param ContainerInterface $container
-   * @param Mapping $mapping
+   * @param Mapping<T> $mapping
    */
-  public function __construct(ContainerInterface $container, Mapping $mapping)
+  public function __construct(
+    #[Autowire(service: "austral.entity.mapping")] protected Mapping $mapping)
   {
-    $this->container = $container;
-    $this->mapping = $mapping;
   }
 
   /**
-   * @param string $entityKey
+   * @param class-string $entityKey
    * @param string $fieldname
    * @param string $id
    *
@@ -66,30 +55,35 @@ class FileDownloader
    */
   public function init(string $entityKey, string $fieldname, string $id): FileDownloader
   {
-    /** @var FileInterface $object */
+    /** @var FileInterface<T>|null $object */
     $object = $this->mapping->getObject($entityKey, $id);
-    /** @var FieldFileMapping $fieldFieldMapping */
-    if($fieldFieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
+    if($object)
     {
-      $this->objectFilePath = $fieldFieldMapping->getObjectFilePath($object);
-      if(!file_exists($this->objectFilePath) && !is_file($this->objectFilePath))
+      /** @var FieldFileMapping<T>|null $fieldFieldMapping */
+      $fieldFieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname);
+      if($fieldFieldMapping )
       {
-        throw new \InvalidArgumentException("Not file exist {$this->objectFilePath}");
+        $this->objectFilePath = $fieldFieldMapping->getObjectFilePath($object);
+        if($this->objectFilePath && !file_exists($this->objectFilePath) && !is_file($this->objectFilePath))
+        {
+          throw new \InvalidArgumentException("Not file exist {$this->objectFilePath}");
+        }
+        $this->name = $fieldFieldMapping->getFilename($object);
       }
-      $this->name = $fieldFieldMapping->getFilename($object);
+      else
+      {
+        throw new \InvalidArgumentException("Object ".get_class($object)." is not init FieldMapping");
+      }
     }
-    else
-    {
-      throw new \InvalidArgumentException("Object ".get_class($object)." is not init FieldMapping");
-    }
+
 
     return $this;
   }
 
   /**
-   * @return string
+   * @return string|null
    */
-  public function getObjectFilePath(): string
+  public function getObjectFilePath(): ?string
   {
     return $this->objectFilePath;
   }
@@ -97,17 +91,17 @@ class FileDownloader
   /**
    * @return false|int
    */
-  public function getSize()
+  public function getSize(): false|int
   {
-    return filesize($this->objectFilePath);
+    return $this->objectFilePath ? filesize($this->objectFilePath) : false;
   }
 
   /**
-   * @param null $default
+   * @param string|null $default
    *
-   * @return string
+   * @return string|null
    */
-  public function getName($default = null): ?string
+  public function getName(?string $default = null): ?string
   {
     return $this->name ? : $default;
   }

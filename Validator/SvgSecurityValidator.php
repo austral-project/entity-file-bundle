@@ -1,6 +1,6 @@
 <?php
 /*
- * This file is part of the Austral Form Bundle package.
+ * This file is part of the Austral EntityFile Bundle package.
  *
  * (c) Austral <support@austral.dev>
  *
@@ -25,12 +25,12 @@ class SvgSecurityValidator extends ConstraintValidator
       throw new UnexpectedTypeException($constraint, SvgSecurity::class);
     }
 
-    // Si aucun fichier ou fichier invalide, on laisse la contrainte File gérée
+    // No file or invalid file: let the File constraint handle it
     if (!$value instanceof UploadedFile || !$value->isValid()) {
       return;
     }
 
-    // On ne vérifie le contenu que s'il s'agit d'un SVG
+    // Only check the content of SVG files
     $mimeType = $value->getMimeType();
     $extension = strtolower($value->getClientOriginalExtension());
 
@@ -38,21 +38,21 @@ class SvgSecurityValidator extends ConstraintValidator
       $content = file_get_contents($value->getPathname());
 
       if (false === $content) {
-        $this->context->buildViolation('Impossible de lire le fichier SVG.')->addViolation();
+        $this->context->buildViolation($constraint->unreadableMessage)->addViolation();
         return;
       }
 
-      // 1. Détection rapide via Regex des éléments critiques
+      // 1. Fast regex detection of dangerous elements
       if ($this->hasMaliciousCode($content)) {
         $this->context->buildViolation($constraint->message)->addViolation();
         return;
       }
 
-      // 2. Double vérification avec HtmlSanitizer
+      // 2. Second check with HtmlSanitizer
       $sanitizer = $this->createSvgSanitizer();
       $cleanContent = $sanitizer->sanitize($content);
 
-      // Si le sanitizer supprime des balises (ex: <script>), la longueur ou le contenu change
+      // If the sanitizer removes tags (e.g. <script>), the length or the content changes
       if (strlen(trim($cleanContent)) !== strlen(trim($content))) {
         $this->context->buildViolation($constraint->message)->addViolation();
       }
@@ -61,11 +61,11 @@ class SvgSecurityValidator extends ConstraintValidator
 
   private function hasMaliciousCode(string $content): bool
   {
-    // Recherche de balises <script>, iframe, embed, object ou d'évènements JS (onload, onclick...)
+    // Look for <script>, iframe, embed, object tags or JS event handlers (onload, onclick...)
     $patterns = [
       '/<script/i',
       '/javascript\s:/i',
-      '/on\w+\s*=/i', // Détecte onload=, onclick=, onerror=, etc.
+      '/on\w+\s*=/i', // Matches onload=, onclick=, onerror=, etc.
       '/<iframe/i',
       '/<embed/i',
       '/<object/i',

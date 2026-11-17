@@ -39,7 +39,7 @@ Class UploadsConfiguration extends BaseConfiguration
   /**
    * Initialize the service
    *
-   * @param array Config
+   * @param array<mixed> $config
    */
   public function __construct(array $config, CropperConfiguration $cropperConfiguration)
   {
@@ -68,43 +68,15 @@ Class UploadsConfiguration extends BaseConfiguration
   }
 
   /**
-   * @param string $key
-   * @param null $default
+   * getCropper
    *
-   * @return array|string
+   * @param string $key
+   * @return array<string, mixed>
    */
-  public function get_(string $key, $default = null)
+  public function getCropper(string $key): array
   {
-    $matches = explode(".", $key);
-    $entitySluggerCase = $matches[0];
-    if(strpos($entitySluggerCase, "@") !== false)
-    {
-      $keys = array();
-      foreach (explode("@", $entitySluggerCase) as $key)
-      {
-        $keys[] = AustralTools::slugger($key);
-      }
-      $entitySluggerCase = implode("@", $keys);
-    }
-    if($key === "root.path.uploads" || $key === "root.path.thumbnail") {
-      $entitySluggerCase = null;
-    }
-    $matches[0] = "default";
-    $defaultKeyWithField = implode(".", $matches);
-    if($matches[1] === "form")
-    {
-      $matches[2] = "default";
-    }
-    $defaultKey = implode(".", $matches);
-    $return = parent::get($key, parent::get($defaultKeyWithField, parent::get($defaultKey, $default)));
-
-    return is_array($return) ? $return : str_replace(array('@entity_slugger_case@'), array($entitySluggerCase), $return);
-  }
-
-  public function getCropper($key): array
-  {
-    $listCropper = $this->get("{$key}.cropper", array());
-    $cropperFinal = array();
+    $listCropper = $this->get("{$key}.cropper", []);
+    $cropperFinal = [];
     foreach($listCropper as $cropperKey)
     {
       if($this->cropperConfiguration->get($cropperKey))

@@ -11,18 +11,21 @@
 namespace Austral\EntityFileBundle\Command;
 
 use Austral\EntityBundle\Mapping\EntityMapping;
+use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\File\Compression\Compression;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
 use Austral\ToolsBundle\Command\Base\Command;
-use Austral\ToolsBundle\Command\Exception\CommandException;
 
+use Doctrine\ORM\NonUniqueResultException;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Input\InputOption;
 
 /**
  * Austral Compress Command.
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
@@ -32,22 +35,12 @@ class CompressCommand extends Command
   /**
    * @var string
    */
-  protected static $defaultName = 'austral:file:compress';
-
-  /**
-   * @var string
-   */
   protected string $titleCommande = "Compress files uploaded";
-
-  /**
-   * @var array
-   */
-  protected array $rolesExists;
 
   /**
    * {@inheritdoc}
    */
-  protected function configure()
+  protected function configure(): void
   {
     $this
       ->setDefinition([
@@ -66,30 +59,42 @@ EOF
   }
 
   /**
-   * @var Compression
+   * @var Compression|null
    */
-  protected Compression $compression;
+  protected ?Compression $compression = null;
 
   /**
    * @param InputInterface $input
    * @param OutputInterface $output
    *
-   * @throws CommandException
-   * @throws \Doctrine\ORM\NonUniqueResultException
+   * @throws NonUniqueResultException
    */
-  protected function executeCommand(InputInterface $input, OutputInterface $output)
+  protected function executeCommand(InputInterface $input, OutputInterface $output): void
   {
-    $this->compression = $this->container->get('austral.entity_file.compression');
+    $compression =  $this->container?->get('austral.entity_file.compression');
+    if (!$compression instanceof Compression) {
+      throw new \LogicException(sprintf(
+        "Service 'austral.entity_file.compression' must implement %s",
+        Compression::class
+      ));
+    }
+    $this->compression = $compression;
 
-    $mapping = $this->container->get("austral.entity.mapping");
+    $mapping =  $this->container?->get('austral.entity.mapping');
+    if (!$mapping instanceof Mapping) {
+      throw new \LogicException(sprintf(
+        "Service 'austral.entity.mapping' must implement %s",
+        Mapping::class
+      ));
+    }
 
-    /** @var  EntityMapping $entityMapping */
+    /** @var  EntityMapping<T> $entityMapping */
     foreach ($mapping->getEntitiesMapping() as $entityMapping)
     {
       /** @var $fieldFileMappings */
       if($fieldFileMappings = $entityMapping->getFieldsMappingByClass(FieldFileMapping::class))
       {
-        /** @var FieldFileMapping $fieldFileMapping */
+        /** @var FieldFileMapping<T> $fieldFileMapping */
         foreach ($fieldFileMappings as $fieldFileMapping)
         {
           if(file_exists($fieldFileMapping->path->upload))
@@ -114,7 +119,7 @@ EOF
    */
   protected function scanDir(string $path): CompressCommand
   {
-    foreach(scandir($path) as $value)
+    foreach(scandir($path) ?: [] as $value)
     {
       if($value !== "." && $value !== "..")
       {
@@ -128,7 +133,7 @@ EOF
           if(AustralTools::isImage($subPath))
           {
             $this->viewMessage("Compress : {$subPath}", "note");
-            $this->compression->compress($subPath, array("webp"));
+            $this->compression?->compress($subPath, array("webp"));
           }
         }
       }

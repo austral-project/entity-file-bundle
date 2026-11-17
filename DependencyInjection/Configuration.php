@@ -10,6 +10,7 @@
 
 namespace Austral\EntityFileBundle\DependencyInjection;
 
+use Symfony\Component\Config\Definition\Builder\ArrayNodeDefinition;
 use Symfony\Component\Config\Definition\Builder\TreeBuilder;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 
@@ -24,121 +25,120 @@ class Configuration implements ConfigurationInterface
   /**
    * {@inheritdoc}
    */
-  public function getConfigTreeBuilder()
+  public function getConfigTreeBuilder(): TreeBuilder
   {
-
     $treeBuilder = new TreeBuilder('austral_entity_file');
-
     $rootNode = $treeBuilder->getRootNode();
-    $node = $rootNode->children();
-      $node = $node->arrayNode('compression')
-          ->addDefaultsIfNotSet()
-          ->children()
-            ->scalarNode('command')->end();
-      $node = $this->buildCompressionOptionsNode(
-        $node->arrayNode('options')
-          ->arrayPrototype()
-      )->end()->end()->end()->end();
+    $children = $rootNode->children();
 
-      $node = $this->buildCropperNode($node
-        ->arrayNode('cropper')
-          ->arrayPrototype()
-      )->end()->defaultValue($this->getCropperDefault())->end();
+    // compression
+    $compression = $children->arrayNode('compression')->addDefaultsIfNotSet();
+    $compression->children()->scalarNode('command')->end();
+    $optionsProto = $compression->children()->arrayNode('options')->arrayPrototype();
+    $this->buildCompressionOptionsNode($optionsProto);
 
-      $node = $this->buildImageSizeNode($node
-        ->arrayNode('image_size')
-          ->arrayPrototype()
-      )->end()->defaultValue($this->getImageSizeDefault())->end();
+    // cropper
+    $cropperProto = $children->arrayNode('cropper')->defaultValue($this->getCropperDefault())->arrayPrototype();
+    $this->buildCropperNode($cropperProto);
 
-      $node = $this->buildUploadsNode($node
-        ->arrayNode('uploads')
-          ->arrayPrototype()
-      );
-      $node->end()->defaultValue($this->getUploadsDefault())->end()->end();
+    // image_size
+    $imageSizeProto = $children->arrayNode('image_size')->defaultValue($this->getImageSizeDefault())->arrayPrototype();
+    $this->buildImageSizeNode($imageSizeProto);
+
+    // uploads
+    $uploadsProto = $children->arrayNode('uploads')->defaultValue($this->getUploadsDefault())->arrayPrototype();
+    $this->buildUploadsNode($uploadsProto);
+
     return $treeBuilder;
   }
 
   /**
-   * @param $node
+   * @param ArrayNodeDefinition $node
    *
-   * @return mixed
+   * @return ArrayNodeDefinition
    */
-  protected function buildCompressionOptionsNode($node)
+  protected function buildCompressionOptionsNode(ArrayNodeDefinition $node): ArrayNodeDefinition
   {
-    return $node
-      ->children()
-        ->scalarNode('quality')->end()
-        ->scalarNode('level')->end()
-      ->end();
+    $children = $node->children();
+    $children->scalarNode('quality')->end();
+    $children->scalarNode('level')->end();
+    return $node;
   }
 
   /**
-   * @param $node
+   * @param ArrayNodeDefinition $node
    *
-   * @return mixed
+   * @return ArrayNodeDefinition
    */
-  protected function buildCropperNode($node)
+  protected function buildCropperNode(ArrayNodeDefinition $node): ArrayNodeDefinition
   {
-    return $node
-      ->children()
-        ->scalarNode('name')->cannotBeEmpty()->end()
-        ->scalarNode('picto')->cannotBeEmpty()->end()
-        ->scalarNode('ratio')->cannotBeEmpty()->end()
-      ->end();
+    $children = $node->children();
+    $children->scalarNode('name')->cannotBeEmpty()->end();
+    $children->scalarNode('picto')->cannotBeEmpty()->end();
+    $children->scalarNode('ratio')->cannotBeEmpty()->end();
+    return $node;
   }
 
   /**
-   * @param $node
+   * @param ArrayNodeDefinition $node
    *
-   * @return mixed
+   * @return ArrayNodeDefinition
    */
-  protected function buildImageSizeNode($node)
+  protected function buildImageSizeNode(ArrayNodeDefinition $node): ArrayNodeDefinition
   {
-    return $node
-      ->children()
-        ->arrayNode('width')
-          ->children()
-            ->scalarNode('min')->end()
-            ->scalarNode('max')->end()
-          ->end()
-        ->end()
-        ->arrayNode('height')
-          ->children()
-            ->scalarNode('min')->end()
-            ->scalarNode('max')->end()
-          ->end()
-        ->end()
-      ->end();
+    $children = $node->children();
+
+    $width = $children->arrayNode('width');
+    $widthChildren = $width->children();
+    $widthChildren->scalarNode('min')->end();
+    $widthChildren->scalarNode('max')->end();
+
+    $height = $children->arrayNode('height');
+    $heightChildren = $height->children();
+    $heightChildren->scalarNode('min')->end();
+    $heightChildren->scalarNode('max')->end();
+
+    return $node;
   }
 
   /**
-   * @param $node
+   * @param ArrayNodeDefinition $node
    *
-   * @return mixed
+   * @return ArrayNodeDefinition
    */
-  protected function buildUploadsNode($node)
+  protected function buildUploadsNode(ArrayNodeDefinition $node): ArrayNodeDefinition
   {
-    return $node
-      ->children()
-        ->arrayNode('size')
-          ->children()
-            ->scalarNode('max')->defaultValue("1024k")->isRequired()->cannotBeEmpty()->end()
-            ->scalarNode('min')->end()
-          ->end()
-        ->end()
-        ->arrayNode('mimeTypes')->scalarPrototype()->end()->end()
-        ->arrayNode('croppers')->scalarPrototype()->end()->end()
-        ->arrayNode('errors')
-          ->children()
-            ->scalarNode('maxSize')->end()
-            ->scalarNode('mimeTypes')->end()
-          ->end()
-        ->end() // errors
+    $children = $node->children();
+
+    // size
+    $size = $children->arrayNode('size');
+    $sizeChildren = $size->children();
+    $sizeChildren->scalarNode('max')
+      ->defaultValue('1024k')
+      ->isRequired()
+      ->cannotBeEmpty()
       ->end();
+    $sizeChildren->scalarNode('min')->end();
+
+    // mimeTypes
+    $mimeTypes = $children->arrayNode('mimeTypes');
+    $mimeTypes->scalarPrototype()->end();
+
+    // croppers
+    $croppers = $children->arrayNode('croppers');
+    $croppers->scalarPrototype()->end();
+
+    // errors
+    $errors = $children->arrayNode('errors');
+    $errorsChildren = $errors->children();
+    $errorsChildren->scalarNode('maxSize')->end();
+    $errorsChildren->scalarNode('mimeTypes')->end();
+
+    return $node;
   }
 
   /**
-   * @return array
+   * @return array<string, array<string, array<int|string, string>>>
    */
   public function getUploadsDefault(): array
   {
@@ -147,7 +147,14 @@ class Configuration implements ConfigurationInterface
         "size"        =>  array(
           "max"       => "2M"
         ),
-        "mimeTypes" =>  array('image/jpg', 'image/jpeg', 'image/png', 'image/gif', 'image/svg', 'image/svg+xml'),
+        "mimeTypes" =>  array(
+          'image/jpg',
+          'image/jpeg',
+          'image/png',
+          'image/gif',
+          'image/svg',
+          'image/svg+xml'
+        ),
         "errors"    =>  array(
           "maxSize"   =>  "file.errors.maxSize",
           "mimeTypes" =>  "file.errors.mimeTypes"
@@ -166,7 +173,7 @@ class Configuration implements ConfigurationInterface
   }
 
   /**
-   * @return array
+   * @return array<string, array<string, array<string, int>>>
    */
   public function getImageSizeDefault(): array
   {
@@ -185,7 +192,7 @@ class Configuration implements ConfigurationInterface
   }
 
   /**
-   * @return array
+   * @return array<string, array<string, string>>
    */
   public function getCropperDefault(): array
   {

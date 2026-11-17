@@ -11,29 +11,22 @@
 namespace Austral\EntityFileBundle\File\Cropper;
 
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityBundle\Entity\Interfaces\FileInterface;
-use Austral\EntityFileBundle\Entity\Traits\EntityFileCropperTrait;
+use Austral\Contracts\File\FileInterface;
 use Austral\EntityFileBundle\File\Image\Image;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
 use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Austral Cropper.
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
 class Cropper
 {
-  /**
-   * @var Mapping
-   */
-  protected Mapping $mapping;
-
-  /**
-   * @var Image
-   */
-  protected Image $image;
 
   /**
    * @var Filesystem
@@ -41,57 +34,60 @@ class Cropper
   protected Filesystem $filesystem;
 
   /**
-   * Cropper constructor.
+   * Cropper constructor
    *
+   * @param Image<T> $image
+   * @param Mapping<T> $mapping
    */
-  public function __construct(Image $image, Mapping $mapping)
+  public function __construct(
+    #[Autowire(service: 'austral.entity_file.image')] protected Image $image,
+    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping)
   {
-    $this->mapping = $mapping;
-    $this->image = $image;
     $this->filesystem = new Filesystem();
   }
 
   /**
-   * @param FileInterface|EntityFileCropperTrait $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
    * @param string $cropperKey
-   * @param array $cropperData
+   * @param array<string, mixed> $cropperData
    *
-   * @return Cropper
+   * @return $this
    * @throws \Exception
    */
-  public function crop(FileInterface $object, string $fieldname, string $cropperKey, array $cropperData = array()): Cropper
+  public function crop(FileInterface $object, string $fieldname, string $cropperKey, array $cropperData = []): self
   {
-    if($fieldFileMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
+    /** @var FieldFileMapping<T>|null $fieldFileMapping */
+    $fieldFileMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname);
+    if($fieldFileMapping)
     {
       if(!$cropperData)
       {
         $cropperData = $fieldFileMapping->getCropperDataValue($object, $cropperKey);
       }
-
       $filePath = $fieldFileMapping->getObjectFilePath($object);
-      if($cropperData && AustralTools::isImage($filePath))
+      if($cropperData && $filePath && AustralTools::isImage($filePath))
       {
         $this->image->open($filePath);
 
-        $cropBoxData = AustralTools::getValueByKey($cropperData, "cropBoxData", array());
-        $canvasData = AustralTools::getValueByKey($cropperData, "cropCanvas", array());
-        $imageData = AustralTools::getValueByKey($cropperData, "imageData", array());
+        $cropBoxData = AustralTools::valueByKey($cropperData, "cropBoxData", []);
+        $canvasData = AustralTools::valueByKey($cropperData, "cropCanvas", []);
+        $imageData = AustralTools::valueByKey($cropperData, "imageData", []);
 
-        $imageNaturalWidth = (float) AustralTools::getValueByKey($imageData, "naturalWidth", 0);
-        $imageNaturalHeight = (float) AustralTools::getValueByKey($imageData, "naturalHeight", 0);
+        $imageNaturalWidth = (int) AustralTools::valueByKey($imageData, "naturalWidth", 0);
+        $imageNaturalHeight = (int) AustralTools::valueByKey($imageData, "naturalHeight", 0);
 
-        $imageWidth = (float) AustralTools::getValueByKey($imageData, "width", 0);
+        $imageWidth = (int) AustralTools::valueByKey($imageData, "width", 0);
         $coeffZoom = $imageWidth > 0 ? $imageNaturalWidth/$imageWidth : 0;
 
-        $cropBoxWidth = (float) AustralTools::getValueByKey($cropBoxData, "width", 0);
-        $cropBoxHeight = (float) AustralTools::getValueByKey($cropBoxData, "height", 0);
+        $cropBoxWidth = (int) AustralTools::valueByKey($cropBoxData, "width", 0);
+        $cropBoxHeight = (int) AustralTools::valueByKey($cropBoxData, "height", 0);
 
-        $cropBoxLeft = (float) AustralTools::getValueByKey($cropBoxData, "left", 0);
-        $cropBoxTop = (float) AustralTools::getValueByKey($cropBoxData, "top", 0);
+        $cropBoxLeft = (int) AustralTools::valueByKey($cropBoxData, "left", 0);
+        $cropBoxTop = (int) AustralTools::valueByKey($cropBoxData, "top", 0);
 
-        $canvasLeft = (float) AustralTools::getValueByKey($canvasData, "left", 0);
-        $canvasTop = (float) AustralTools::getValueByKey($canvasData, "top", 0);
+        $canvasLeft = (int) AustralTools::valueByKey($canvasData, "left", 0);
+        $canvasTop = (int) AustralTools::valueByKey($canvasData, "top", 0);
 
         $positionX = $cropBoxLeft - $canvasLeft;
         $positionY = $cropBoxTop - $canvasTop;
@@ -111,7 +107,6 @@ class Cropper
         {
           $cropBoxFinalHeight = $imageNaturalHeight;
         }
-
 
         $rotate = 0;
         $flip = null;

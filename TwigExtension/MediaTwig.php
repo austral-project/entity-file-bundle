@@ -11,139 +11,102 @@
 namespace Austral\EntityFileBundle\TwigExtension;
 
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityBundle\Entity\Interfaces\FileInterface;
-use Austral\EntityFileBundle\Entity\Traits\EntityFileCropperTrait;
+use Austral\Contracts\File\FileInterface;
+use Austral\EntityFileBundle\File\Link\Generator;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Twig\Extension\AbstractExtension;
-use Twig\TwigFilter;
-use Twig\TwigFunction;
+use Twig\Attribute\AsTwigFilter;
+use Twig\Attribute\AsTwigFunction;
 
 /**
  * Austral Media Twig Extension.
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
-class MediaTwig extends AbstractExtension
+class MediaTwig
 {
 
   /**
-   * @var ContainerInterface $container
-   */
-  protected ContainerInterface $container;
-
-  /**
-   * @var Mapping $mapping
-   */
-  protected Mapping $mapping;
-
-  /**
-   * Initialize tinymce helper
+   * Cropper constructor
    *
-   * @param ContainerInterface $container
-   * @param Mapping $mapping
+   * @param Generator<T> $generator
+   * @param Mapping<T> $mapping
    */
-  public function __construct(ContainerInterface $container, Mapping $mapping)
+  public function __construct(
+    #[Autowire(service: 'austral.entity_file.link.generator')] protected Generator $generator,
+    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping
+  )
   {
-    $this->container = $container;
-    $this->mapping = $mapping;
-  }
-
-  /**
-   * @return TwigFilter[]
-   */
-  public function getFilters()
-  {
-    return [
-      new TwigFilter('austral_entity_file_parameters', [$this, 'parameters']),
-      new TwigFilter('austral_entity_file_image_url', [$this, 'image']),
-      new TwigFilter('austral_entity_file_download_url', [$this, 'download']),
-
-      new TwigFilter('austral_entity_file_path', [$this, 'filePath']),
-      new TwigFilter('austral_entity_file_exist', [$this, 'fileExist']),
-      new TwigFilter('austral_entity_file_size', [$this, 'fileSize']),
-      new TwigFilter('austral_entity_file_mime_type', [$this, 'fileMimeType']),
-      new TwigFilter('austral_entity_file_is_image', [$this, 'isImage']),
-      new TwigFilter('austral_entity_file_image_size', [$this, 'imageSize']),
-      new TwigFilter('austral_entity_file_image_ratio', [$this, 'imageRatio']),
-    ];
-  }
-
-  /**
-   * @return TwigFunction[]
-   */
-  public function getFunctions()
-  {
-    return array(
-      "austral_entity_file.image_url"    => new TwigFunction("image", array($this, "image")),
-      "austral_entity_file.download_url" => new TwigFunction("download", array($this, "download")),
-
-      "austral_entity_file.path"         => new TwigFunction("austral_entity_file.path", array($this, "filePath")),
-      "austral_entity_file.parameters"   => new TwigFunction("austral_entity_file.parameters", array($this, "parameters")),
-      "austral_entity_file.exist"        => new TwigFunction("austral_entity_file.exist", array($this, "fileExist")),
-      "austral_entity_file.size"         => new TwigFunction("austral_entity_file.size", array($this, "fileSize")),
-      "austral_entity_file.mime_type"    => new TwigFunction("austral_entity_file.mime_type", array($this, "fileMimeType")),
-      "austral_entity_file.is_image"     => new TwigFunction("austral_entity_file.is_image", array($this, "isImage")),
-      "austral_entity_file.image_size"   => new TwigFunction("austral_entity_file.image_size", array($this, "imageSize")),
-      "austral_entity_file.image_ratio"  => new TwigFunction("austral_entity_file.image_ratio", array($this, "imageRatio")),
-    );
   }
 
   /**
    * Download Url initializations
    *
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
-   * @param array $params
+   * @param array{urlPath?: string, urlType?: int} $params
    *
    * @return string|null
+   * @throws \Exception
    */
-  public function download(FileInterface $object, string $fieldname, array $params = array()): ?string
+  #[AsTwigFilter('austral_entity_file.download_url')]
+  #[AsTwigFunction('austral_entity_file_download_url')]
+  public function download(FileInterface $object, string $fieldname, array $params = []): ?string
   {
-    return $this->container->get('austral.entity_file.link.generator')->download($object, $fieldname, $params);
+    return $this->generator->download($object, $fieldname, $params);
   }
 
   /**
-   * Download Url initializations
+   * Image Url initializations
    *
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
    * @param string|null $mode
    * @param int|null $width
    * @param int|null $height
    * @param string|null $type
-   * @param array $params
+   * @param array{urlPath?: string, urlType?: int, webp?: mixed} $params
    *
    * @return string|null
+   * @throws \Exception
    */
-  public function image(FileInterface $object, string $fieldname, ?string $type = "original", ?string $mode = "resize", int $width = null, int $height = null, array $params = array()): ?string
+  #[AsTwigFilter('austral_entity_file.image_url')]
+  #[AsTwigFunction('austral_entity_file_image_url')]
+  public function image(FileInterface $object, string $fieldname, ?string $type = "original", ?string $mode = "resize", ?int $width = null, ?int $height = null, array $params = []): ?string
   {
-    return $this->container->get('austral.entity_file.link.generator')->image($object, $fieldname, $type, $mode, $width, $height, $params);
+    return $this->generator->image($object, $fieldname, $type, $mode, $width, $height, $params);
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
    *
    * @return bool
    * @throws \Exception
    */
+  #[AsTwigFilter('austral_entity_file.exist')]
+  #[AsTwigFunction('austral_entity_file_exist')]
   public function fileExist(FileInterface $object, string $fieldname): bool
   {
     return (bool)$this->filePath($object, $fieldname);
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
    * @param bool $humanize
    *
    * @return false|int|string
    * @throws \Exception
    */
-  public function fileSize(FileInterface $object, string $fieldname, bool $humanize = false)
+  #[AsTwigFilter('austral_entity_file.size')]
+  #[AsTwigFunction('austral_entity_file_size')]
+  public function fileSize(FileInterface $object, string $fieldname, bool $humanize = false): false|int|string
   {
     if($filePath = $this->filePath($object, $fieldname))
     {
@@ -153,12 +116,14 @@ class MediaTwig extends AbstractExtension
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
    *
    * @return string|null
    * @throws \Exception
    */
+  #[AsTwigFilter('austral_entity_file.mime_type')]
+  #[AsTwigFunction('austral_entity_file_mime_type')]
   public function fileMimeType(FileInterface $object, string $fieldname): ?string
   {
     if($filePath = $this->filePath($object, $fieldname))
@@ -169,12 +134,14 @@ class MediaTwig extends AbstractExtension
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
    *
    * @return bool
    * @throws \Exception
    */
+  #[AsTwigFilter('austral_entity_file.is_image')]
+  #[AsTwigFunction('austral_entity_file_is_image')]
   public function isImage(FileInterface $object, string $fieldname): bool
   {
     if($filePath = $this->filePath($object, $fieldname))
@@ -185,79 +152,80 @@ class MediaTwig extends AbstractExtension
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
    * @param bool $returnArray
    *
-   * @return array|string|null
+   * @return array<string, int>|string
    * @throws \Exception
    */
-  public function imageSize(FileInterface $object, string $fieldname, bool $returnArray = true)
+  #[AsTwigFilter('austral_entity_file.image_size')]
+  #[AsTwigFunction('austral_entity_file_image_size')]
+  public function imageSize(FileInterface $object, string $fieldname, bool $returnArray = true): array|string
   {
     if($filePath = $this->filePath($object, $fieldname))
     {
       return AustralTools::imageDimension($filePath, $returnArray);
     }
-    return $returnArray ? array() : null;
+    return $returnArray ? [] : "";
   }
 
   /**
-   * @param FileInterface|null $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
    *
    * @return string|null
    * @throws \Exception
    */
-  public function filePath(?FileInterface $object, string $fieldname): ?string
+  #[AsTwigFilter('austral_entity_file.path')]
+  #[AsTwigFunction('austral_entity_file_path')]
+  public function filePath(FileInterface $object, string $fieldname): ?string
   {
-    /** @var FieldFileMapping $fieldMapping */
-    if($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
-    {
-      return $fieldMapping->getObjectFilePath($object);
-    }
-    return null;
+    /** @var FieldFileMapping<T>|null $fieldMapping */
+    $fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname);
+    return $fieldMapping?->getObjectFilePath($object);
   }
 
 
   /**
-   * @param FileInterface|EntityFileCropperTrait|null $object
+   * @param FileInterface<T> $object
    * @param string $fieldname
    * @param string|null $cropperKey
    *
    * @return float|null
    * @throws \Exception
    */
-  public function imageRatio(?FileInterface $object, string $fieldname, string $cropperKey = null): ?float
+  #[AsTwigFilter('austral_entity_file.image_ratio')]
+  #[AsTwigFunction('austral_entity_file_image_ratio')]
+  public function imageRatio(FileInterface $object, string $fieldname, ?string $cropperKey = null): ?float
   {
     $ratio = null;
-    if($imageSizes = $this->imageSize($object, $fieldname, true))
+    $imageSizes = $this->imageSize($object, $fieldname);
+    if(is_array($imageSizes) && array_key_exists("width", $imageSizes) && array_key_exists("height", $imageSizes) && $imageSizes["width"] > 0 && $imageSizes["height"] > 0)
     {
-      if(array_key_exists("width", $imageSizes) && array_key_exists("height", $imageSizes) && $imageSizes["width"] > 0 && $imageSizes["height"] > 0)
+      $ratio = $imageSizes["width"]/$imageSizes['height'];
+      /** @var FieldFileMapping<T>|null $fieldMapping */
+      $fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname);
+      if($fieldMapping && $cropperKey && ($cropperData = $fieldMapping->getCropperDataByFieldname($object, $cropperKey)))
       {
-        $ratio = $imageSizes["width"]/$imageSizes['height'];
-        /** @var FieldFileMapping $fieldMapping */
-        if($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname))
-        {
-          if($cropperKey && ($cropperData = $fieldMapping->getCropperDataByFieldname($object, $cropperKey)))
-          {
-            $cropBoxData = AustralTools::getValueByKey($cropperData, "cropBoxData", array());
-            $cropBoxWidth = (float) AustralTools::getValueByKey($cropBoxData, "width", 0);
-            $cropBoxHeight = (float) AustralTools::getValueByKey($cropBoxData, "height", 0);
-            $ratio = $cropBoxWidth/$cropBoxHeight;
-          }
-        }
+        $cropBoxData = AustralTools::valueByKey($cropperData, "cropBoxData", []);
+        $cropBoxWidth = (float) AustralTools::valueByKey($cropBoxData, "width", 0);
+        $cropBoxHeight = (float) AustralTools::valueByKey($cropBoxData, "height", 0);
+        $ratio = $cropBoxHeight > 0 ? $cropBoxWidth/$cropBoxHeight : $ratio;
       }
     }
     return $ratio;
   }
 
   /**
-   * @param FileInterface|null $object
+   * @param FileInterface<T>|null $object
    * @param string $fieldname
    *
-   * @return array
+   * @return array<string, mixed>
    * @throws \Exception
    */
+  #[AsTwigFilter('austral_entity_file.parameters')]
+  #[AsTwigFunction('austral_entity_file_parameters')]
   public function parameters(?FileInterface $object, string $fieldname): array
   {
     $parameters = array(
@@ -283,40 +251,42 @@ class MediaTwig extends AbstractExtension
         "aspectRatio"       =>  null,
       ),
     );
-    /** @var FieldFileMapping $fieldMapping */
-    if($object && ($fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname)))
+    if($object)
     {
-      if($filePath = $this->filePath($object, $fieldname))
+      /** @var FieldFileMapping<T>|null $fieldMapping */
+      $fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $fieldname);
+      if($fieldMapping)
       {
-        $isImage  = AustralTools::isImage($filePath);
-        $parameters["file"]["reelFilename"] = $fieldMapping->getFilename($object, true);
-        $parameters["file"]['path'] = array(
-          "view"          =>  $isImage ? $this->image($object, $fieldname, "original", "i", 1000, 1000) : null,
-          "original"      =>  $isImage ? $this->image($object, $fieldname) : null,
-          "download"      =>  $this->download($object, $fieldname),
-          "absolute"      =>  $filePath,
-        );
-        $parameters['infos']["mimeType"] = AustralTools::mimeType($filePath);
-        $parameters['infos']["extension"] = AustralTools::extension($filePath);
-        $parameters['infos']["size"] = filesize($filePath);
-        $parameters['infos']["sizeHuman"] = AustralTools::humanizeSize($filePath);
-        if($isImage)
+        if($filePath = $this->filePath($object, $fieldname))
         {
-          $imageDimension = $isImage ? AustralTools::imageDimension($filePath, true) : array(
-            "width"             =>  null,
-            "height"            =>  null,
+          $isImage  = AustralTools::isImage($filePath);
+          $parameters["file"]["reelFilename"] = $fieldMapping->getFilename($object, true);
+          $parameters["file"]['path'] = array(
+            "view"          =>  $isImage ? $this->image($object, $fieldname, "original", "i", 1000, 1000) : null,
+            "original"      =>  $isImage ? $this->image($object, $fieldname) : null,
+            "download"      =>  $this->download($object, $fieldname),
+            "absolute"      =>  $filePath,
           );
-          $aspectRatio = null;
-          if(array_key_exists("width", $imageDimension) && array_key_exists("height", $imageDimension))
+          $parameters['infos']["mimeType"] = AustralTools::mimeType($filePath);
+          $parameters['infos']["extension"] = AustralTools::extension($filePath);
+          $parameters['infos']["size"] = filesize($filePath);
+          $parameters['infos']["sizeHuman"] = AustralTools::humanizeSize($filePath);
+          if($isImage)
           {
-            if($imageDimension["width"] > 0 && $imageDimension["height"] > 0)
+            /** @var array<string, int> $imageDimension */
+            $imageDimension = AustralTools::imageDimension($filePath, true);
+            $aspectRatio = null;
+            if(array_key_exists("width", $imageDimension) && array_key_exists("height", $imageDimension))
             {
-              $aspectRatio = $imageDimension["width"]/$imageDimension["height"];
+              if($imageDimension["width"] > 0 && $imageDimension["height"] > 0)
+              {
+                $aspectRatio = $imageDimension["width"]/$imageDimension["height"];
+              }
             }
+            $parameters['infos']["imageSize"] = $imageDimension ? implode(" x ", $imageDimension) : null;
+            $parameters['infos']["imageDimension"] = $imageDimension;
+            $parameters['infos']["aspectRatio"] = $aspectRatio;
           }
-          $parameters['infos']["imageSize"] = $imageDimension ? implode(" x ", $imageDimension) : null;
-          $parameters['infos']["imageDimension"] = $imageDimension;
-          $parameters['infos']["aspectRatio"] = $aspectRatio;
         }
       }
     }

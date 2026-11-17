@@ -1,0 +1,3 @@
+# French translations of the validation messages ("validators" domain)
+"The SVG file contains potentially dangerous code (scripts or JavaScript events).": "Le fichier SVG contient du code potentiellement dangereux (scripts ou évènements JavaScript)."
+"The SVG file cannot be read.": "Impossible de lire le fichier SVG."

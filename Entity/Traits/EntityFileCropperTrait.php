@@ -9,12 +9,19 @@
  */
 namespace Austral\EntityFileBundle\Entity\Traits;
 
+use Austral\EntityBundle\Entity\Entity;
+use Austral\EntityFileBundle\Entity\Interfaces\CropperInterface;
 use Austral\ToolsBundle\AustralTools;
 use Doctrine\ORM\Mapping as ORM;
 
 
 /**
  * Austral Entity File Cropper Trait.
+ * @template T of object
+ *
+ * @phpstan-require-implements CropperInterface<T>
+ * @phpstan-require-extends Entity<T>
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  */
 trait EntityFileCropperTrait
@@ -24,27 +31,27 @@ trait EntityFileCropperTrait
    * @var array|null
    * @ORM\Column(name="cropper_data", type="json", length=255, nullable=true)
    */
-  protected ?array $cropperData = array();
+  protected ?array $cropperData = [];
 
   /**
    * @var array
    */
-  protected array $generateCropperByKey = array();
+  protected array $generateCropperByKey = [];
 
   /**
    * @return array
    */
   public function getCropperData(): array
   {
-    return $this->cropperData ? : array();
+    return $this->cropperData ? : [];
   }
 
   /**
-   * @param array $cropperData
+   * @param array<string, mixed> $cropperData
    *
    * @return $this
    */
-  public function setCropperData(array $cropperData)
+  public function setCropperData(array $cropperData): static
   {
     $this->cropperData = $cropperData;
     return $this;
@@ -57,7 +64,7 @@ trait EntityFileCropperTrait
    */
   public function getCropperDataByFilename(string $filename): array
   {
-    return AustralTools::getValueByKey($this->getCropperData(), $filename, array());
+    return AustralTools::valueByKey($this->getCropperData(), $filename, []);
   }
 
   /**
@@ -73,7 +80,7 @@ trait EntityFileCropperTrait
    *
    * @return $this
    */
-  public function setGenerateCropperByKey(array $generateCropperByKey)
+  public function setGenerateCropperByKey(array $generateCropperByKey): static
   {
     $this->generateCropperByKey = $generateCropperByKey;
     return $this;

@@ -13,85 +13,68 @@ namespace Austral\EntityFileBundle\Listener;
 
 use Austral\EntityBundle\Event\EntityManagerEvent;
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityBundle\Entity\Interfaces\FileInterface;
+use Austral\Contracts\File\FileInterface;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\EntityFileBundle\File\Upload\FileUploader;
-use Austral\EntityBundle\Entity\Interfaces\TranslateChildInterface;
+use Austral\Contracts\Translate\TranslateChildInterface;
 use Austral\ToolsBundle\AustralTools;
 use Exception;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Austral EntityManager Listener.
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  */
 class EntityManagerListener
 {
 
   /**
-   * @var ContainerInterface
+   * @param Mapping<T> $mapping
+   * @param FileUploader<T> $fileUploader
    */
-  protected ContainerInterface $container;
-
-  /**
-   * @var Mapping
-   */
-  protected Mapping $mapping;
-
-  /**
-   * @var FileUploader
-   */
-  protected FileUploader $fileUploader;
-
-
-  /**
-   * @param ContainerInterface $container
-   * @param Mapping $mapping
-   * @param FileUploader $fileUploader
-   */
-  public function __construct(ContainerInterface $container,
-    Mapping $mapping,
-    FileUploader $fileUploader
+  public function __construct(
+    #[Autowire(service: "austral.entity.mapping")] protected Mapping $mapping,
+    #[Autowire(service: "austral.entity_file.uploader")] protected FileUploader $fileUploader
   )
   {
-    $this->container = $container;
-    $this->mapping = $mapping;
-    $this->fileUploader = $fileUploader;
   }
 
   /**
-   * @param EntityManagerEvent $entityManagerEvent
+   * @param EntityManagerEvent<T> $entityManagerEvent
    *
    * @throws Exception
    */
-  public function duplicate(EntityManagerEvent $entityManagerEvent)
+  public function duplicate(EntityManagerEvent $entityManagerEvent): void
   {
     $this->copyFilenameOrFile($entityManagerEvent, "filename");
   }
 
   /**
-   * @param EntityManagerEvent $entityManagerEvent
+   * @param EntityManagerEvent<T> $entityManagerEvent
    *
    * @throws Exception
    */
-  public function copyFile(EntityManagerEvent $entityManagerEvent)
+  public function copyFile(EntityManagerEvent $entityManagerEvent): void
   {
     $this->copyFilenameOrFile($entityManagerEvent, "file");
   }
 
   /**
-   * @param EntityManagerEvent $entityManagerEvent
+   * @param EntityManagerEvent<T> $entityManagerEvent
    * @param string $type
    *
    * @return void
    * @throws Exception
    */
-  protected function copyFilenameOrFile(EntityManagerEvent $entityManagerEvent, string $type)
+  protected function copyFilenameOrFile(EntityManagerEvent $entityManagerEvent, string $type): void
   {
-
     if(AustralTools::usedImplements(get_class($entityManagerEvent->getObject()), TranslateChildInterface::class))
     {
-      $objectMaster = $entityManagerEvent->getObject()->getMaster();
+      /** @var TranslateChildInterface<T> $object */
+      $object = $entityManagerEvent->getObject();
+      $objectMaster = $object->getMaster();
     }
     else
     {
@@ -100,17 +83,15 @@ class EntityManagerListener
 
     if(AustralTools::usedImplements(get_class($objectMaster), FileInterface::class))
     {
-      /** @var FieldFileMapping $fieldFileMapping */
+      /** @var FieldFileMapping<T> $fieldFileMapping */
       foreach($this->mapping->getFieldsMappingByClass($objectMaster->getClassnameForMapping(), FieldFileMapping::class) as $fieldFileMapping)
       {
-
-        /** @var FileInterface $sourceObject */
+        /** @var FileInterface<T>|null $sourceObject */
         $sourceObject = $entityManagerEvent->getSourceObject();
 
-        /** @var FileInterface $destinationObject */
+        /** @var FileInterface<T> $destinationObject */
         $destinationObject = $entityManagerEvent->getObject();
-
-        if($sourceObject && $destinationObject)
+        if($sourceObject)
         {
           if($type === "file")
           {

@@ -7,15 +7,22 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Austral\EntityFileBundle\Annotation;
+namespace Austral\EntityFileBundle\Attribute;
 
-use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
+use Symfony\Component\Validator\Attribute\HasNamedArguments;
 
 /**
- * @Annotation
- * @NamedArgumentConstructor()
- * @Target({"PROPERTY", "ANNOTATION"})
+ * Attribute Cropper
+ * @template T of object
+ *
+ * @Attribute
+ * @package Austral\EntityBundle\Attribute
+ * @Target({"TARGET_PROPERTY", "TARGET_METHOD"})
+ *
+ * @author  Matthieu Beurel <matthieu@austral.dev>
+ * @final
  */
+#[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_METHOD)]
 final class Cropper
 {
 
@@ -30,9 +37,9 @@ final class Cropper
   public string $name;
 
   /**
-   * @var string
+   * @var string|null
    */
-  public string $picto;
+  public ?string $picto = null;
 
   /**
    * @var string|null
@@ -41,10 +48,10 @@ final class Cropper
 
   /**
    * @param string $name
-   * @param string $picto
+   * @param string|null $picto
    * @param string|null $ratio
    */
-  public function __construct(string $name, string $picto, ?string $ratio = null)
+  public function __construct(string $name, ?string $picto = null, ?string $ratio = null)
   {
     $this->name = $name;
     $this->key = $name;

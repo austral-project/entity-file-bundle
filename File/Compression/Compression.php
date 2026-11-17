@@ -11,12 +11,12 @@
 namespace Austral\EntityFileBundle\File\Compression;
 
 use Austral\EntityFileBundle\Configuration\CompressionConfiguration;
-use Austral\ToolsBundle\AustralTools;
 use Symfony\Component\HttpClient\NativeHttpClient;
-use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Process\Process;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 /**
  * Austral Compression.
@@ -32,7 +32,7 @@ class Compression
   protected CompressionConfiguration $compressionConfiguration;
 
   /**
-   * @var array
+   * @var array<string, string>
    */
   protected array $squooshFormatByFormat = array(
     "jpg"       =>  "mozjpeg",
@@ -51,9 +51,9 @@ class Compression
 
   /**
    * @param string $imageThumbnailPath
-   * @param array $generateOtherFormat
+   * @param string[] $generateOtherFormat
    */
-  public function compress(string $imageThumbnailPath, array $generateOtherFormat = array())
+  public function compress(string $imageThumbnailPath, array $generateOtherFormat = []): void
   {
     if($command = $this->compressionConfiguration->get('command', null))
     {
@@ -63,12 +63,20 @@ class Compression
       }
       else
       {
-        $this->executeCommand($command, $imageThumbnailPath, $generateOtherFormat);
+        $this->executeCli($command, $imageThumbnailPath, $generateOtherFormat);
       }
     }
   }
 
-  protected function executeCommand(string $command, string $imageThumbnailPath, array $generateOtherFormat = array())
+  /**
+   * executeCli
+   *
+   * @param string $command
+   * @param string $imageThumbnailPath
+   * @param string[] $generateOtherFormat
+   * @return void
+   */
+  protected function executeCli(string $command, string $imageThumbnailPath, array $generateOtherFormat = []): void
   {
     $imageThumbnailPathDir = pathinfo($imageThumbnailPath, PATHINFO_DIRNAME);
     $extension = pathinfo($imageThumbnailPath, PATHINFO_EXTENSION);
@@ -110,17 +118,25 @@ class Compression
     }
   }
 
-  protected function executeApi(string $command, string $imageThumbnailPath, array $generateOtherFormat = array())
+  /**
+   * executeApi
+   *
+   * @param string $command
+   * @param string $imageThumbnailPath
+   * @param string[] $generateOtherFormat
+   * @return void
+   */
+  protected function executeApi(string $command, string $imageThumbnailPath, array $generateOtherFormat = []): void
   {
     $url = str_replace("api://", "http://", $command)."/optimize";
     $imageThumbnailPathDir = pathinfo($imageThumbnailPath, PATHINFO_DIRNAME);
     $extension = pathinfo($imageThumbnailPath, PATHINFO_EXTENSION);
-    $formats = array();
-    $options = array();
+    $formats = [];
+    $options = [];
     if($squooshFormat = $this->getSquooshOptionByFormat($extension))
     {
       $formats[] = $squooshFormat;
-      $options[$squooshFormat] = $this->compressionConfiguration->get("options.{$squooshFormat}", array());
+      $options[$squooshFormat] = $this->compressionConfiguration->get("options.{$squooshFormat}", []);
     }
     if($generateOtherFormat)
     {
@@ -129,11 +145,10 @@ class Compression
         if ($otherSquooshFormat = $this->getSquooshOptionByFormat($format))
         {
           $formats[] = $otherSquooshFormat;
-          $options[$squooshFormat] = $this->compressionConfiguration->get("options.{$otherSquooshFormat}", array());
+          $options[$otherSquooshFormat] = $this->compressionConfiguration->get("options.{$otherSquooshFormat}", []);
         }
       }
     }
-
     if(count($formats) > 0) {
       $httpClient = new NativeHttpClient();
       $payload = [
@@ -141,7 +156,7 @@ class Compression
         'outputDir' => $imageThumbnailPathDir,
         'formats' => $formats,
         'options' => $options,
-        "wait" => true
+        'wait' => true,
       ];
 
       try {
@@ -156,39 +171,34 @@ class Compression
         $statusCode = $response->getStatusCode();
         $content = $response->getContent();
 
-      } catch (TransportExceptionInterface|ClientExceptionInterface|ServerExceptionInterface $e) {
-        throw new \RuntimeException("Erreur HTTP: " . $e->getMessage());
+      } catch (TransportExceptionInterface|ClientExceptionInterface|ServerExceptionInterface|RedirectionExceptionInterface $e) {
+        throw new \RuntimeException("HTTP error: " . $e->getMessage());
       }
       $data = json_decode($content, true);
       $requestSuccess = false;
-      if(isset($data['accepted']))
-      {
-        $requestSuccess = $data['accepted'];
+      if (is_array($data) && isset($data['accepted'])) {
+        $requestSuccess = (bool) $data['accepted'];
+      } elseif (is_array($data) && isset($data['success'])) {
+        $requestSuccess = (bool) $data['success'];
       }
-      elseif(isset($data['success']))
-      {
-        $requestSuccess = $data['success'] ;
-      }
-
       if ($statusCode !== 200 || !$data || !$requestSuccess) {
-        throw new \RuntimeException("Réponse invalide du service Squoosh : $content");
+        throw new \RuntimeException("Invalid response from the Squoosh service: $content");
       }
     }
   }
 
-
   /**
    * @param string $extension
    *
-   * @return false|string
+   * @return string|null
    */
-  protected function getSquooshOptionByFormat(string $extension)
+  protected function getSquooshOptionByFormat(string $extension): ?string
   {
     if(array_key_exists($extension, $this->squooshFormatByFormat))
     {
       return $this->squooshFormatByFormat[$extension];
     }
-    return false;
+    return null;
   }
 
 }

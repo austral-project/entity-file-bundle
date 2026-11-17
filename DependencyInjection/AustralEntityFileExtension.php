@@ -44,7 +44,9 @@ class AustralEntityFileExtension extends Extension
     $container->setParameter('austral_entity_file.image_size', $config['image_size']);
 
     $loader = new YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
+    $loader->load('parameters.yaml');
     $loader->load('services.yaml');
+    $loader->load('command.yaml');
     $this->loadConfigToAustralFormBundle($container, $loader);
   }
 
@@ -56,7 +58,9 @@ class AustralEntityFileExtension extends Extension
    */
   protected function loadConfigToAustralFormBundle(ContainerBuilder $container, YamlFileLoader $loader): void
   {
-    $bundlesConfigPath = $container->getParameter("kernel.project_dir")."/config/bundles.php";
+    $kernelProjectDir = $container->getParameter('kernel.project_dir');
+    $bundlesConfigPath = (is_string($kernelProjectDir) ? $kernelProjectDir : "")."/config/bundles.php";
+
     if(file_exists($bundlesConfigPath))
     {
       $contents = require $bundlesConfigPath;

@@ -11,16 +11,21 @@
 namespace Austral\EntityFileBundle\File\Mapping;
 
 use Austral\EntityBundle\Mapping\FieldMapping;
-use Austral\EntityFileBundle\Annotation as AustralFile;
-use Austral\EntityBundle\Entity\Interfaces\FileInterface;
+use Austral\EntityBundle\Mapping\FieldMappingInterface;
+use Austral\EntityFileBundle\Attribute as AustralFile;
+use Austral\Contracts\File\FileInterface;
 use Austral\ToolsBundle\AustralTools;
 
 /**
  * Austral FieldFileMapping.
+ * @template T of object
+ *
+ * @extends FieldMapping<T>
+ * @implements FieldMappingInterface<T>
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
-final Class FieldFileMapping extends FieldMapping
+final Class FieldFileMapping extends FieldMapping implements FieldMappingInterface
 {
 
   /**
@@ -39,13 +44,18 @@ final Class FieldFileMapping extends FieldMapping
   public ?AustralFile\ImageSize $imageSize = null;
 
   /**
-   * @var AustralFile\Croppers|null
+   * @var AustralFile\Croppers<T>|null
    */
   public ?AustralFile\Croppers $croppers = null;
 
 
   /**
-   * Constructor.
+   * FieldFileMapping constructor
+   *
+   * @param AustralFile\UploadParameters $uploadParameters
+   * @param AustralFile\Path $path
+   * @param AustralFile\ImageSize|null $imageSize
+   * @param AustralFile\Croppers<T>|null $croppers
    */
   public function __construct(
     AustralFile\UploadParameters $uploadParameters,
@@ -65,25 +75,26 @@ final Class FieldFileMapping extends FieldMapping
    */
   public function getSlugger(): string
   {
-    return $this->entityMapping->slugger;
+    return $this->entityMapping?->slugger ?? '';
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param bool $reel
-   * @param null $default
+   * @param string|null $default
    *
    * @return string|null
    * @throws \Exception
    */
-  protected function getEntityFileValue(FileInterface $object, bool $reel = true, $default = null): ?string
+  protected function getEntityFileValue(FileInterface $object, bool $reel = true, ?string $default = null): ?string
   {
-    $value = $object->getValueByFieldname($reel ? $this->uploadParameters->keyname : ($this->uploadParameters->virtualnameField ?? $this->uploadParameters->keyname));
+    $valueKey = $reel ? $this->uploadParameters->keyname : ($this->uploadParameters->virtualNameField ?? $this->uploadParameters->keyname);
+    $value = $valueKey ? $object->getValueByFieldname($valueKey) : null;
     return $value ?: $default;
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    *
    * @return string|null
    * @throws \Exception
@@ -91,14 +102,14 @@ final Class FieldFileMapping extends FieldMapping
   public function getObjectFilePath(FileInterface $object): ?string
   {
     $filePath = null;
-    if(($value = $this->getEntityFileValue($object, $this->getFieldname())) && ($pathDir = $this->getFilePathDir()))
+    if(($value = $this->getEntityFileValue($object)) && ($pathDir = $this->getFilePathDir()))
     {
       $filePath = AustralTools::join(
         $pathDir,
         $value
       );
     }
-    return ($filePath && file_exists($filePath) && is_file($filePath)) ? $filePath : false;
+    return ($filePath && file_exists($filePath) && is_file($filePath)) ? $filePath : null;
   }
 
   /**
@@ -113,7 +124,7 @@ final Class FieldFileMapping extends FieldMapping
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    * @param bool $reel
    *
    * @return ?string
@@ -145,7 +156,7 @@ final Class FieldFileMapping extends FieldMapping
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    *
    * @return string|null
    * @throws \Exception
@@ -156,7 +167,7 @@ final Class FieldFileMapping extends FieldMapping
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    *
    * @return string|null
    * @throws \Exception
@@ -169,7 +180,7 @@ final Class FieldFileMapping extends FieldMapping
   /**
    * @param string $cropperKey
    *
-   * @return AustralFile\Cropper|null
+   * @return AustralFile\Cropper<T>|null
    */
   public function getCropperByName(string $cropperKey): ?AustralFile\Cropper
   {
@@ -177,47 +188,47 @@ final Class FieldFileMapping extends FieldMapping
   }
 
   /**
-   * @param FileInterface $object
+   * @param FileInterface<T> $object
    *
-   * @return array
+   * @return array<string, mixed>
    * @throws \Exception
    */
   public function getCropperData(FileInterface $object): array
   {
     $value = $object->getValueByFieldname("cropperData");
-    return $value ?: array();
+    return ($value && is_array($value)) ? $value : [];
   }
 
   /**
-   * @param $object
+   * @param FileInterface<T> $object
    * @param string $cropperKey
    *
-   * @return array
+   * @return array<string, mixed>
    * @throws \Exception
    */
-  public function getCropperDataByFieldname($object, string $cropperKey): array
+  public function getCropperDataByFieldname(FileInterface $object, string $cropperKey): array
   {
-    if($this->getCropperByName($cropperKey))
+    if($this->getCropperByName($cropperKey) && $this->getFieldname())
     {
-      return array_key_exists($this->getFieldname(), $this->getCropperData($object)) ? $this->getCropperData($object)[$this->getFieldname()] : array();
+      return array_key_exists($this->getFieldname(), $this->getCropperData($object)) ? $this->getCropperData($object)[$this->getFieldname()] : [];
     }
-    return array();
+    return [];
   }
 
   /**
-   * @param $object
+   * @param FileInterface<T> $object
    * @param string $cropperKey
    *
-   * @return array
+   * @return array<string, mixed>
    * @throws \Exception
    */
-  public function getCropperDataValue($object, string $cropperKey): array
+  public function getCropperDataValue(FileInterface $object, string $cropperKey): array
   {
     if($cropper = $this->getCropperByName($cropperKey))
     {
-      return array_key_exists($cropper->key, $this->getCropperDataByFieldname($object, $cropperKey)) ?  $this->getCropperDataByFieldname($object, $cropperKey)[$cropper->key] : array();
+      return array_key_exists($cropper->key, $this->getCropperDataByFieldname($object, $cropperKey)) ?  $this->getCropperDataByFieldname($object, $cropperKey)[$cropper->key] : [];
     }
-    return array();
+    return [];
   }
 
 }

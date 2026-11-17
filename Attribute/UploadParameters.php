@@ -7,23 +7,28 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Austral\EntityFileBundle\Annotation;
+namespace Austral\EntityFileBundle\Attribute;
 
-use Austral\EntityBundle\Annotation\AustralEntityAnnotation;
-use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
+use Austral\EntityBundle\Attribute\AustralEntityAttribute;
 
 /**
- * @Annotation
- * @NamedArgumentConstructor()
- * @Target({"PROPERTY", "ANNOTATION"})
+ * Attribute UploadParameters
+ *
+ * @Attribute
+ * @package Austral\EntityBundle\Attribute
+ * @Target({"TARGET_PROPERTY", "TARGET_METHOD"})
+ *
+ * @author  Matthieu Beurel <matthieu@austral.dev>
+ * @final
  */
-final class UploadParameters extends AustralEntityAnnotation implements EntityFileAnnotationInterface
+#[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_METHOD)]
+final class UploadParameters extends AustralEntityAttribute implements EntityFileAttributeInterface
 {
 
   /**
-   * @var string|null
+   * @var string
    */
-  public ?string $configName = "";
+  public string $configName;
 
   /**
    * @var bool
@@ -31,9 +36,9 @@ final class UploadParameters extends AustralEntityAnnotation implements EntityFi
   public bool $isRequired = false;
 
   /**
-   * @var array
+   * @var string[]
    */
-  public array $mimeTypes = array();
+  public array $mimeTypes = [];
 
   /**
    * @var string|null
@@ -43,7 +48,7 @@ final class UploadParameters extends AustralEntityAnnotation implements EntityFi
   /**
    * @var string|null
    */
-  public ?string $virtualnameField = null;
+  public ?string $virtualNameField = null;
 
   /**
    * @var string
@@ -56,23 +61,23 @@ final class UploadParameters extends AustralEntityAnnotation implements EntityFi
   public string $errorMimeTypes = "file.errors.mimeTypes";
 
   /**
-   * @param string|null $configName
+   * @param string $configName
    * @param bool $isRequired
-   * @param array $mimeTypes
+   * @param array<int, string> $mimeTypes
    * @param string|null $sizeMax
-   * @param string|null $virtualnameField
+   * @param string|null $virtualNameField
    */
-  public function __construct(string $configName = null,
+  public function __construct(string $configName,
     bool $isRequired = false,
-    array $mimeTypes = array(),
+    array $mimeTypes = [],
     ?string $sizeMax = null,
-    ?string $virtualnameField = null
+    ?string $virtualNameField = null
   ) {
     $this->configName = $configName;
     $this->isRequired = $isRequired;
     $this->mimeTypes = $mimeTypes;
     $this->sizeMax = $sizeMax;
-    $this->virtualnameField = $virtualnameField;
+    $this->virtualNameField = $virtualNameField;
   }
 
   /**
@@ -83,7 +88,7 @@ final class UploadParameters extends AustralEntityAnnotation implements EntityFi
     $typeFile = $this->mimeTypes ? "picture" : "file";
     foreach($this->mimeTypes as $mimeType)
     {
-      if(strpos($mimeType, "image/") === false)
+      if(!str_contains($mimeType, "image/"))
       {
         $typeFile = "file";
       }

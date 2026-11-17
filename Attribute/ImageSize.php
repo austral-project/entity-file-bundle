@@ -7,23 +7,28 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Austral\EntityFileBundle\Annotation;
+namespace Austral\EntityFileBundle\Attribute;
 
-use Austral\EntityBundle\Annotation\AustralEntityAnnotation;
-use Doctrine\Common\Annotations\Annotation\NamedArgumentConstructor;
+use Austral\EntityBundle\Attribute\AustralEntityAttribute;
 
 /**
- * @Annotation
- * @NamedArgumentConstructor()
- * @Target({"PROPERTY", "ANNOTATION"})
+ * Attribute ImageSize
+ *
+ * @Attribute
+ * @package Austral\EntityBundle\Attribute
+ * @Target({"TARGET_PROPERTY", "TARGET_METHOD"})
+ *
+ * @author  Matthieu Beurel <matthieu@austral.dev>
+ * @final
  */
-final class ImageSize extends AustralEntityAnnotation implements EntityFileAnnotationInterface
+#[\Attribute(\Attribute::TARGET_PROPERTY | \Attribute::TARGET_METHOD)]
+final class ImageSize extends AustralEntityAttribute implements EntityFileAttributeInterface
 {
 
   /**
    * @var string|null
    */
-  public ?string $configName = "";
+  public ?string $configName = null;
 
   /**
    * @var float|null

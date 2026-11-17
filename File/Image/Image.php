@@ -15,13 +15,16 @@ use Austral\ToolsBundle\AustralTools;
 
 use Imagine\Image\Box;
 use Imagine\Image\BoxInterface;
-use Imagine\Image\ImageInterface;
+use Imagine\Image\ManipulatorInterface;
 use Imagine\Image\Point;
 
+use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
  * Austral Image.
+ * @template T of object
+ *
  * @author Matthieu Beurel <matthieu@austral.dev>
  * @final
  */
@@ -29,19 +32,19 @@ class Image
 {
 
   /**
-   * @var string
+   * @var string|null
    */
-  protected string $reelImagePath;
+  protected ?string $reelImagePath = null;
 
   /**
    * @var mixed
    */
-  protected $imagine;
+  protected mixed $imagine;
 
   /**
-   * @var \Imagine\Gd\Image
+   * @var \Imagine\Gd\Image|null
    */
-  protected \Imagine\Gd\Image $image;
+  protected ?\Imagine\Gd\Image $image = null;
 
   /**
    * @var Filesystem
@@ -49,20 +52,15 @@ class Image
   protected Filesystem $fileSystem;
 
   /**
-   * @var Compression
-   */
-  protected Compression $compression;
-
-  /**
    * Image constructor.
    *
-   * @param $imagineLib
+   * @param string $imagineLib
    * @param Compression $compression
    */
-  public function __construct($imagineLib, Compression $compression)
+  public function __construct(string $imagineLib,
+    #[Autowire(service: "austral.entity_file.compression")] protected Compression $compression)
   {
     $this->imagine = new $imagineLib();
-    $this->compression = $compression;
     $this->fileSystem = new Filesystem();
   }
 
@@ -86,11 +84,11 @@ class Image
   /**
    * @param string $reelImagePath
    *
-   * @return array
+   * @return array<string, mixed>
    */
   public function infosForReelImage(string $reelImagePath): array
   {
-    $params = array();
+    $params = [];
     if(file_exists($reelImagePath))
     {
       if($this->isImage($reelImagePath))
@@ -105,29 +103,27 @@ class Image
   }
 
   /**
-   * @return array
+   * @return array<string, mixed>
    */
   public function metadata(): array
   {
-    if($this->getMimeTypeReel() == "image/jpg" || $this->getMimeTypeReel() == "image/jpeg")
-    {
-      try {
-        return exif_read_data($this->reelImagePath);
-      }
-      catch (\Exception $e)
-      {
-        return array();
-      }
+    if ($this->getMimeTypeReel() !== 'image/jpg' && $this->getMimeTypeReel() !== 'image/jpeg') {
+      return [];
     }
-    return array();
+    try {
+      $data = $this->reelImagePath && file_exists($this->reelImagePath) ? @exif_read_data($this->reelImagePath) : [];
+      return is_array($data) ? $data : [];
+    } catch (\Throwable) {
+      return [];
+    }
   }
 
   /**
    * @return mixed|string|string[]
    */
-  public function orientation()
+  public function orientation(): mixed
   {
-    return AustralTools::getValueByKey($this->metadata(), "Orientation", null);
+    return AustralTools::valueByKey($this->metadata(), "Orientation", null);
   }
 
   /**
@@ -149,57 +145,61 @@ class Image
     }
     if($rotateVal)
     {
-      $this->image->rotate($rotateVal);
+      $this->image?->rotate($rotateVal);
     }
     return $this;
   }
 
   /**
-   * @param $filename
+   * @param string $filename
    *
    * @return bool
    */
-  public function isImage($filename): bool
+  public function isImage(string $filename): bool
   {
     return AustralTools::isImage($filename);
   }
 
   /**
-   * @param null $width
-   * @param null $height
-   * @param null $mode
+   * @param int|float|null $width
+   * @param int|float|null $height
+   * @param string|null $mode
    *
    * @return $this
    */
-  public function thumbnail($width = null, $height = null, $mode = null): Image
+  public function thumbnail(int|float|null $width = null, int|float|null $height = null, ?string $mode = null): Image
   {
-    $mode = ($mode == "o" ? ImageInterface::THUMBNAIL_OUTBOUND : ImageInterface::THUMBNAIL_INSET);
-    if(!$width)
+    $mode = ($mode === "o" ? ManipulatorInterface::THUMBNAIL_OUTBOUND : ManipulatorInterface::THUMBNAIL_INSET);
+    if(!$width && $height)
     {
       $width = $this->calculateAutoWidth($height);
     }
-    elseif(!$height)
+    elseif(!$height && $width)
     {
       $height = $this->calculateAutoHeight($width);
     }
+    $width = (int) $width;
+    $height = (int) $height;
     $sizeBox = new Box($width, $height);
-    $this->image = $this->image->thumbnail($sizeBox, $mode);
+    if ($this->image) {
+      $this->image = $this->image->thumbnail($sizeBox, $mode);
+    }
     return $this;
   }
 
 
   /**
-   * @param null $width
-   * @param null $height
-   * @param null $modeResize
+   * @param float|int|null $width
+   * @param float|int|null $height
+   * @param string|null $modeResize
    *
    * @return $this
    */
-  public function resize($width = null, $height = null, $modeResize = null): Image
+  public function resize(float|int|null $width = null, float|int|null $height = null, ?string $modeResize = null): Image
   {
     if($width && $height)
     {
-      if($modeResize == "min")
+      if($modeResize === "min")
       {
         if($this->getWidth() > $this->getHeight())
         {
@@ -221,7 +221,7 @@ class Image
           }
         }
       }
-      elseif($modeResize == "ratio")
+      elseif($modeResize === "ratio")
       {
         $ratioImage = (float) $this->getWidth()/$this->getHeight();
         $ratioBySize = (float) $width/$height;
@@ -259,34 +259,36 @@ class Image
     }
     else
     {
-      if(!$width)
+      if(!$width && $height)
       {
         $width = $this->calculateAutoWidth($height);
       }
-      elseif(!$height)
+      elseif(!$height && $width)
       {
         $height = $this->calculateAutoHeight($width);
       }
     }
+    $width = (int) $width;
+    $height = (int) $height;
     $sizeBox = new Box($width, $height);
-    $this->image->resize($sizeBox);
+    $this->image?->resize($sizeBox);
     return $this;
   }
 
   /**
-   * @param $natutalWidth
-   * @param $naturalHeight
-   * @param $positionX
-   * @param $positionY
-   * @param $cropWidth
-   * @param $cropHeight
+   * @param int $natutalWidth
+   * @param int $naturalHeight
+   * @param int $positionX
+   * @param int $positionY
+   * @param int $cropWidth
+   * @param int $cropHeight
    * @param int $rotate
-   * @param null $flip
+   * @param string|null $flip
    *
    * @return $this
    */
 
-  public function crop($natutalWidth, $naturalHeight, $positionX, $positionY, $cropWidth, $cropHeight, int $rotate = 0, $flip = null): Image
+  public function crop(int $natutalWidth, int $naturalHeight, int $positionX, int $positionY, int $cropWidth, int $cropHeight, int $rotate = 0, ?string $flip = null): Image
   {
     switch($this->orientation()) {
       case 8:
@@ -302,48 +304,48 @@ class Image
 
     if($rotate)
     {
-      $this->image->rotate($rotate);
+      $this->image?->rotate($rotate);
     }
 
-    if($flip == "horizontal")
+    if($flip === "horizontal")
     {
-      $this->image->flipHorizontally();
+      $this->image?->flipHorizontally();
     }
-    elseif($flip == "vertical")
+    elseif($flip === "vertical")
     {
-      $this->image->flipVertically();
+      $this->image?->flipVertically();
     }
 
     $sizeImg = new Box($natutalWidth, $naturalHeight);
     $sizeBox = new Box($cropWidth, $cropHeight);
     $point = new Point($positionX, $positionY);
 
-    $this->image->resize($sizeImg)->crop($point, $sizeBox);
+    $this->image?->resize($sizeImg)->crop($point, $sizeBox);
     return $this;
   }
 
   /**
-   * @param $savePath
-   * @param array $generateOtherFormat
+   * @param string $savePath
+   * @param array<int, mixed> $generateOtherFormat
    *
    * @return $this
    */
-  public function save($savePath, array $generateOtherFormat = array()): Image
+  public function save(string $savePath, array $generateOtherFormat = []): Image
   {
     $this->createDirSave($savePath);
-    $this->image->save($savePath);
+    $this->image?->save($savePath);
     $this->compression->compress($savePath, $generateOtherFormat);
     return $this;
   }
 
   /**
-   * @param $savePath
+   * @param string $savePath
    */
-  protected function createDirSave($savePath)
+  protected function createDirSave(string $savePath): void
   {
     $infoPath = pathinfo($savePath);
     $dirname = array_key_exists("dirname", $infoPath) ? $infoPath['dirname'] : null;
-    if(!file_exists($dirname) && $dirname)
+    if($dirname && !file_exists($dirname))
     {
       $this->fileSystem->mkdir($dirname);
     }
@@ -354,55 +356,55 @@ class Image
    */
   public function getMimeTypeReel(): ?string
   {
-    return AustralTools::mimeType($this->reelImagePath);
+    return $this->reelImagePath ? AustralTools::mimeType($this->reelImagePath) : null;
   }
 
   /**
-   * @return string
+   * @return string|null
    */
-  public function getExtension(): string
+  public function getExtension(): ?string
   {
-    return AustralTools::extension($this->reelImagePath);
+    return $this->reelImagePath ? AustralTools::extension($this->reelImagePath) : null;
   }
 
   /**
    * @return false|int
    */
-  public function getFileSizeReel()
+  public function getFileSizeReel(): false|int
   {
-    return filesize($this->reelImagePath);
+    return $this->reelImagePath ? filesize($this->reelImagePath) : 0;
   }
 
   /**
-   * @return Box|BoxInterface
+   * @return Box|BoxInterface|null
    */
-  public function getSize()
+  public function getSize(): Box|BoxInterface|null
   {
-    return $this->image->getSize();
+    return $this->image?->getSize();
   }
 
   /**
-   * @return int
+   * @return int|null
    */
-  public function getWidth(): int
+  public function getWidth(): ?int
   {
-    return $this->getSize()->getWidth();
+    return $this->getSize()?->getWidth();
   }
 
   /**
-   * @return int
+   * @return int|null
    */
-  public function getHeight(): int
+  public function getHeight(): ?int
   {
-    return $this->getSize()->getHeight();
+    return $this->getSize()?->getHeight();
   }
 
   /**
-   * @param $newHeight
+   * @param float|int $newHeight
    *
    * @return float
    */
-  protected function calculateAutoWidth($newHeight): float
+  protected function calculateAutoWidth(float|int $newHeight): float
   {
     $width = $this->getWidth();
     $height = $this->getHeight();
@@ -410,11 +412,11 @@ class Image
   }
 
   /**
-   * @param $newWidth
+   * @param float|int $newWidth
    *
    * @return float
    */
-  protected function calculateAutoHeight($newWidth): float
+  protected function calculateAutoHeight(float|int $newWidth): float
   {
     $width = $this->getWidth();
     $height = $this->getHeight();
