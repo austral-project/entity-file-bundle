@@ -7,4 +7,9 @@ parameters:
   paths:
     - src
     - tests
+  # Bridges integrate with bundles that are not migrated to V4 yet (form, admin, entity-translate):
+  # analysed again once those bundles are added to require-dev.
+  excludePaths:
+    analyse:
+      - src/Bridge
   tmpDir: var/phpstan

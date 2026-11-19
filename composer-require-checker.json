@@ -1,0 +1,27 @@
+{
+  "symbol-whitelist": [
+    "Austral\\AdminBundle\\Configuration\\ConfigurationChecker",
+    "Austral\\AdminBundle\\Configuration\\ConfigurationCheckerValue",
+    "Austral\\AdminBundle\\Event\\ConfigurationCheckerEvent",
+    "Austral\\EntityTranslateBundle\\Entity\\Traits\\EntityTranslateMasterTrait",
+    "Austral\\FormBundle\\Event\\FormEvent",
+    "Austral\\FormBundle\\Event\\FormFieldEvent",
+    "Austral\\FormBundle\\Field\\SymfonyField",
+    "Austral\\FormBundle\\Field\\UploadField",
+    "Austral\\FormBundle\\Mapper\\Fieldset",
+    "exif_read_data"
+  ],
+  "php-core-extensions": [
+    "Core",
+    "date",
+    "json",
+    "hash",
+    "pcre",
+    "Phar",
+    "Reflection",
+    "SPL",
+    "random",
+    "standard"
+  ],
+  "scan-files": []
+}
