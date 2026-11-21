@@ -17,6 +17,29 @@ All `austral/*` packages must be upgraded to `^4.0` at the same time.
 
 ## Breaking changes
 
+### File interfaces in `austral/contracts`
+
+The entity interfaces are in `austral/contracts`, without alias:
+
+| 3.1 | 4.0 |
+|-----|-----|
+| `Austral\EntityBundle\Entity\Interfaces\FileInterface` | `Austral\Contracts\File\FileInterface` |
+| — (the use of `EntityFileCropperTrait` was enough) | `Austral\Contracts\File\CropperInterface` |
+
+**An entity with croppers must now implement `CropperInterface`.** In 3.1, the croppers of an entity were detected by the use of `EntityFileCropperTrait` (or `EntityTranslateMasterFileCropperTrait`). In 4.0 they are detected by the interface. To avoid losing the cropping data without notice, the entity mapping throws a `\LogicException` when an entity uses a cropper trait without implementing the interface.
+
+```diff
+- use Austral\EntityBundle\Entity\Interfaces\FileInterface;
++ use Austral\Contracts\File\CropperInterface;
++ use Austral\Contracts\File\FileInterface;
+  use Austral\EntityFileBundle\Entity\Traits\EntityFileCropperTrait;
+
+- class Page extends Entity implements FileInterface
++ class Page extends Entity implements FileInterface, CropperInterface
+  {
+    use EntityFileCropperTrait;
+```
+
 ### Annotations replaced by attributes
 
 The Doctrine annotations are replaced by PHP attributes, in the `Austral\EntityFileBundle\Attribute` namespace.
@@ -85,7 +108,10 @@ Rename the `use` inside the class as well.
 ```bash
 grep -rl 'EntityFileBundle\\Annotation' src/ | xargs perl -pi -e 's/EntityFileBundle\\Annotation\\EntityFileAnnotationInterface/EntityFileBundle\\Attribute\\EntityFileAttributeInterface/g; s/EntityFileBundle\\Annotation/EntityFileBundle\\Attribute/g'
 grep -rl 'EntityTranslateMasterFileCropperTrait' src/ | xargs perl -pi -e 's/Austral\\EntityTranslateBundle\\Entity\\Traits\\EntityTranslateMasterFileCropperTrait/Austral\\EntityFileBundle\\Bridge\\EntityTranslate\\Entity\\Traits\\EntityFileCropperTranslateMasterTrait/g; s/\bEntityTranslateMasterFileCropperTrait\b/EntityFileCropperTranslateMasterTrait/g'
+grep -rl 'Interfaces\\FileInterface\|Interfaces\\CropperInterface' src/ | xargs perl -pi -e 's/Austral\\(EntityBundle|EntityFileBundle)\\Entity\\Interfaces\\(File|Cropper)Interface/Austral\\Contracts\\File\\$2Interface/g'
 ```
+
+Then add `CropperInterface` to the entities that use `EntityFileCropperTrait` or `EntityFileCropperTranslateMasterTrait`: this step cannot be done by a command.
 
 The annotations themselves (`/** @AustralFile\... */`) must be rewritten as attributes by hand, or with Rector.
 

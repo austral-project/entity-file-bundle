@@ -8,7 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
-- Unit tests for `EntityFileTrait` and `EntityFileCropperTrait`.
+- Unit tests for `EntityFileTrait`, `EntityFileCropperTrait` and the cropper check of `EntityMappingListener`.
+- The entity mapping throws a `\LogicException` when an entity uses `EntityFileCropperTrait` or `EntityFileCropperTranslateMasterTrait` without implementing `CropperInterface`.
 - `composer-require-checker.json`: symbols of the optional bundles used by `src/Bridge/` are whitelisted.
 
 ### Changed
@@ -23,11 +24,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   The service ids do not change (`austral.entity_file.form.listener`, `austral.entity_file.configuration_checker.listener`).
 - The bridge services (`Resources/config/bridge/form.yaml` and `bridge/admin.yaml`) are loaded when `AustralFormBundle` / `AustralAdminBundle` is registered in the kernel (`kernel.bundles`), instead of reading `config/bundles.php`.
 - `Cropper::$picto` is optional (`?string`).
+- **BREAKING** An entity with croppers is detected by `Austral\Contracts\File\CropperInterface` instead of the use of `EntityFileCropperTrait` (or `EntityTranslateMasterFileCropperTrait`): an entity that uses the trait must also implement the interface.
 - The dependencies used by the code are declared in `composer.json` (contracts, Doctrine, Symfony components, Twig), and `ext-fileinfo` is required. `ext-exif` and the optional Austral bundles are listed in `suggest`.
 
 ### Fixed
 
+- `Compression` no longer builds the compression command by concatenation: the paths and the options are escaped by Symfony Process.
+
 ### Removed
+
+- **BREAKING** `Austral\EntityFileBundle\Entity\Interfaces\FileInterface` and `CropperInterface`: use `Austral\Contracts\File\FileInterface` and `Austral\Contracts\File\CropperInterface` (austral/contracts), without alias.
 
 - **BREAKING** `Austral\EntityTranslateBundle\Entity\Traits\EntityTranslateMasterFileCropperTrait` no longer exists in entity-translate-bundle: it is replaced by `Austral\EntityFileBundle\Bridge\EntityTranslate\Entity\Traits\EntityFileCropperTranslateMasterTrait`.
 

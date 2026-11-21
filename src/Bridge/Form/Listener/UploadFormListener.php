@@ -12,12 +12,12 @@
 namespace Austral\EntityFileBundle\Bridge\Form\Listener;
 
 use Austral\Contracts\Entity\EntityInterface;
+use Austral\Contracts\File\CropperInterface;
 use Austral\Contracts\File\FileInterface;
 use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\Attribute\Cropper;
 use Austral\EntityFileBundle\Configuration\CropperConfiguration;
 use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
-use Austral\EntityFileBundle\Entity\Interfaces\CropperInterface;
 use Austral\EntityFileBundle\Exception\FormUploadException;
 use Austral\EntityFileBundle\File\Link\Generator;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;

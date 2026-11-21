@@ -11,13 +11,16 @@
 
 namespace Austral\EntityFileBundle\Listener;
 
+use Austral\Contracts\File\CropperInterface;
 use Austral\EntityBundle\EntityAttributes\EntityAttributes;
 use Austral\EntityBundle\Event\EntityMappingEvent;
 use Austral\EntityBundle\Mapping\EntityMapping;
 use Austral\EntityFileBundle\Attribute as AustralFile;
+use Austral\EntityFileBundle\Bridge\EntityTranslate\Entity\Traits\EntityFileCropperTranslateMasterTrait;
 use Austral\EntityFileBundle\Configuration\CropperConfiguration;
 use Austral\EntityFileBundle\Configuration\ImageSizeConfiguration;
 use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
+use Austral\EntityFileBundle\Entity\Traits\EntityFileCropperTrait;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
 use Symfony\Component\DependencyInjection\Attribute\Autowire;
@@ -62,6 +65,7 @@ class EntityMappingListener
      */
     foreach ($initialiseEntitesAttributes->all() as $entityAttribute)
     {
+      $this->checkCropperInterface($entityAttribute->getClassname());
       foreach ($entityAttribute->getFieldsAttributes() as $fieldname => $attributes)
       {
         $attributesEnabled = [];
@@ -189,6 +193,31 @@ class EntityMappingListener
           $entityMapping->addFieldMapping($fieldname, $fieldFileMapping);
           $entityAttributeEvent->getMapping()->addEntityMapping($entityAttribute->getClassname(), $entityMapping);
         }
+      }
+    }
+  }
+
+  /**
+   * Since 4.0 the croppers of an entity are detected by CropperInterface, not by the use of a cropper trait.
+   * An entity that uses a cropper trait without the interface would lose its cropping data without any error.
+   *
+   * @param string $classname
+   *
+   * @return void
+   *
+   * @throws \LogicException
+   */
+  protected function checkCropperInterface(string $classname): void
+  {
+    if (is_a($classname, CropperInterface::class, true))
+    {
+      return;
+    }
+    foreach ([EntityFileCropperTrait::class, EntityFileCropperTranslateMasterTrait::class] as $cropperTrait)
+    {
+      if (AustralTools::usedClass($classname, $cropperTrait))
+      {
+        throw new \LogicException(sprintf('%s uses %s but does not implement %s: add the interface, otherwise the cropping data is not saved.', $classname, $cropperTrait, CropperInterface::class));
       }
     }
   }

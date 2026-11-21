@@ -11,9 +11,9 @@
 
 namespace Austral\EntityFileBundle\Bridge\EntityTranslate\Entity\Traits;
 
+use Austral\Contracts\File\CropperInterface;
 use Austral\Contracts\Translate\TranslateMasterInterface;
 use Austral\EntityBundle\Entity\Entity;
-use Austral\EntityFileBundle\Entity\Interfaces\CropperInterface;
 use Austral\EntityTranslateBundle\Entity\Traits\EntityTranslateMasterTrait;
 
 /**

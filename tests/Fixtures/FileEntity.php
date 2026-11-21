@@ -11,9 +11,9 @@
 
 namespace Austral\EntityFileBundle\Tests\Fixtures;
 
+use Austral\Contracts\File\CropperInterface;
 use Austral\Contracts\File\FileInterface;
 use Austral\EntityBundle\Entity\Entity;
-use Austral\EntityFileBundle\Entity\Interfaces\CropperInterface;
 use Austral\EntityFileBundle\Entity\Traits\EntityFileCropperTrait;
 use Austral\EntityFileBundle\Entity\Traits\EntityFileTrait;
 

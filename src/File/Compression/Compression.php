@@ -86,38 +86,33 @@ class Compression
 
     if ($squooshFormat = $this->getSquooshOptionByFormat($extension))
     {
-      $commandParameters = [
-        $command,
-        "--{$squooshFormat}",
-      ];
       $optionsBySquooshFormat = $this->compressionConfiguration->get("options.{$squooshFormat}", null);
-      $optionsBySquooshFormatJson = $optionsBySquooshFormat ? json_encode($optionsBySquooshFormat) : '{}';
-      $commandParameters[] = $optionsBySquooshFormatJson;
-      if ($generateOtherFormat)
+      $commandLine = $command.' "${:format_0}" "${:options_0}"';
+      $parameters = [
+        'format_0' => "--{$squooshFormat}",
+        'options_0' => $optionsBySquooshFormat ? json_encode($optionsBySquooshFormat) : '{}',
+      ];
+
+      $index = 1;
+      foreach ($generateOtherFormat as $format)
       {
-        foreach ($generateOtherFormat as $format)
+        if ($otherSquooshFormat = $this->getSquooshOptionByFormat($format))
         {
-          if ($otherSquooshFormat = $this->getSquooshOptionByFormat($format))
-          {
-            $otherOptionsBySquooshFormat = $this->compressionConfiguration->get("options.{$otherSquooshFormat}", null);
-            $otherOptionsBySquooshFormatJson = $otherOptionsBySquooshFormat ? json_encode($otherOptionsBySquooshFormat) : '{}';
-            $commandParameters[] = "--{$otherSquooshFormat}";
-            $commandParameters[] = $otherOptionsBySquooshFormatJson;
-          }
+          $otherOptionsBySquooshFormat = $this->compressionConfiguration->get("options.{$otherSquooshFormat}", null);
+          $commandLine .= ' "${:format_'.$index.'}" "${:options_'.$index.'}"';
+          $parameters["format_{$index}"] = "--{$otherSquooshFormat}";
+          $parameters["options_{$index}"] = $otherOptionsBySquooshFormat ? json_encode($otherOptionsBySquooshFormat) : '{}';
+          ++$index;
         }
       }
-      $commandParameters[] = '-d';
-      $commandParameters[] = $imageThumbnailPathDir;
-      $commandParameters[] = $imageThumbnailPath;
 
-      $commandParameters[] = '>';
-      $commandParameters[] = '/dev/null';
-      $commandParameters[] = '2>&1';
-      $commandParameters[] = '&';
+      $commandLine .= ' -d "${:directory}" "${:path}" > /dev/null 2>&1 &';
+      $parameters['directory'] = $imageThumbnailPathDir;
+      $parameters['path'] = $imageThumbnailPath;
 
-      $process = Process::fromShellCommandline(implode(' ', $commandParameters));
+      $process = Process::fromShellCommandline($commandLine);
       $process->setTimeout(120);
-      $process->run();
+      $process->run(null, $parameters);
     }
   }
 

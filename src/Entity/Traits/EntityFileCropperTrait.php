@@ -11,8 +11,8 @@
 
 namespace Austral\EntityFileBundle\Entity\Traits;
 
+use Austral\Contracts\File\CropperInterface;
 use Austral\EntityBundle\Entity\Entity;
-use Austral\EntityFileBundle\Entity\Interfaces\CropperInterface;
 use Austral\ToolsBundle\AustralTools;
 use Doctrine\ORM\Mapping as ORM;
 
