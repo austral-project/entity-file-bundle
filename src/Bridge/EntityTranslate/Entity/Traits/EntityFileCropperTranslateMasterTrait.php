@@ -32,19 +32,21 @@ trait EntityFileCropperTranslateMasterTrait
   use EntityTranslateMasterTrait;
 
   /**
+   * @param bool $create creates the current translation when there is none (writes only)
+   *
    * @return CropperInterface|null
    *
    * @throws \Exception
    */
-  private function getTranslateCurrentCropper(): ?CropperInterface
+  private function getTranslateCurrentCropper(bool $create = false): ?CropperInterface
   {
-    $object = $this->getTranslateCurrent();
-    if ($object instanceof CropperInterface)
+    $translate = $this->getTranslateCurrent();
+    if (!$translate && $create && is_a($this->getTranslateClassname(), CropperInterface::class, true))
     {
-      return $object;
+      $translate = $this->createNewTranslateByLanguage();
     }
 
-    return null;
+    return $translate instanceof CropperInterface ? $translate : null;
   }
 
   /**
@@ -66,10 +68,7 @@ trait EntityFileCropperTranslateMasterTrait
    */
   public function setCropperData(array $cropperData): self
   {
-    if ($this->getTranslateCurrentCropper())
-    {
-      $this->getTranslateCurrentCropper()->setCropperData($cropperData);
-    }
+    $this->getTranslateCurrentCropper(true)->setCropperData($cropperData);
 
     return $this;
   }
@@ -105,10 +104,7 @@ trait EntityFileCropperTranslateMasterTrait
    */
   public function setGenerateCropperByKey(array $generateCropperByKey): self
   {
-    if ($this->getTranslateCurrentCropper())
-    {
-      $this->getTranslateCurrentCropper()->setGenerateCropperByKey($generateCropperByKey);
-    }
+    $this->getTranslateCurrentCropper(true)->setGenerateCropperByKey($generateCropperByKey);
 
     return $this;
   }
