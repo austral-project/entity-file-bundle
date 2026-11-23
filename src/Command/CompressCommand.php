@@ -11,7 +11,6 @@
 
 namespace Austral\EntityFileBundle\Command;
 
-use Austral\EntityBundle\Mapping\EntityMapping;
 use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\File\Compression\Compression;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
@@ -61,9 +60,21 @@ class CompressCommand extends Command
   }
 
   /**
-   * @var Compression|null
+   * CompressCommand constructor
+   *
+   * @param Compression     $compression
+   * @param Mapping<object> $mapping
+   * @param string|null     $name
+   * @param callable|null   $code
    */
-  protected ?Compression $compression = null;
+  public function __construct(
+    protected Compression $compression,
+    protected Mapping $mapping,
+    ?string $name = null,
+    ?callable $code = null
+  ) {
+    parent::__construct($name, $code);
+  }
 
   /**
    * @param InputInterface  $input
@@ -73,25 +84,11 @@ class CompressCommand extends Command
    */
   protected function executeCommand(InputInterface $input, OutputInterface $output): void
   {
-    $compression = $this->container?->get('austral.entity_file.compression');
-    if (!$compression instanceof Compression)
-    {
-      throw new \LogicException(sprintf("Service 'austral.entity_file.compression' must implement %s", Compression::class));
-    }
-    $this->compression = $compression;
-
-    $mapping = $this->container->get('austral.entity.mapping');
-    if (!$mapping instanceof Mapping)
-    {
-      throw new \LogicException(sprintf("Service 'austral.entity.mapping' must implement %s", Mapping::class));
-    }
-
-    /** @var EntityMapping<T> $entityMapping */
-    foreach ($mapping->getEntitiesMapping() as $entityMapping)
+    foreach ($this->mapping->getEntitiesMapping() as $entityMapping)
     {
       if ($fieldFileMappings = $entityMapping->getFieldsMappingByClass(FieldFileMapping::class))
       {
-        /** @var FieldFileMapping<T> $fieldFileMapping */
+        /** @var FieldFileMapping<object> $fieldFileMapping */
         foreach ($fieldFileMappings as $fieldFileMapping)
         {
           if (file_exists($fieldFileMapping->path->upload))
@@ -130,7 +127,7 @@ class CompressCommand extends Command
           if (AustralTools::isImage($subPath))
           {
             $this->viewMessage("Compress : {$subPath}", 'note');
-            $this->compression?->compress($subPath, ['webp']);
+            $this->compression->compress($subPath, ['webp']);
           }
         }
       }

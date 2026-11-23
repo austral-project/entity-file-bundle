@@ -13,7 +13,6 @@ namespace Austral\EntityFileBundle\Controller;
 
 use Austral\EntityFileBundle\File\Download\FileDownloader;
 use Austral\EntityFileBundle\File\Image\ImageRender;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
@@ -29,20 +28,15 @@ use Symfony\Component\HttpFoundation\Response;
 class FileController
 {
   /**
-   * @var ContainerInterface|null
-   */
-  protected ?ContainerInterface $container = null;
-
-  /**
-   * setContainer
+   * FileController constructor
    *
-   * @param ContainerInterface|null $container
-   *
-   * @return void
+   * @param ImageRender<object>    $imageRender
+   * @param FileDownloader<object> $fileDownloader
    */
-  public function setContainer(?ContainerInterface $container = null): void
-  {
-    $this->container = $container;
+  public function __construct(
+    protected ImageRender $imageRender,
+    protected FileDownloader $fileDownloader,
+  ) {
   }
 
   /**
@@ -77,9 +71,7 @@ class FileController
     header('Austral: Generate');
     header('Access-Control-Expose-Headers: Content-Type, Content-Range, Content-Disposition, Content-Description, Content-Length, Cache-Control');
 
-    /** @var ImageRender<T> $imageRender */
-    $imageRender = $this->container?->get('austral.entity_file.image.render');
-    $imagePath = $imageRender->initRender(
+    $imagePath = $this->imageRender->initRender(
       $entityKey,
       $id,
       $fieldname,
@@ -141,15 +133,13 @@ class FileController
    */
   public function download(Request $request, string $entityKey, string $fieldname, string $id, string $value): Response
   {
-    /** @var FileDownloader<T> $fileDownloader */
-    $fileDownloader = $this->container?->get('austral.entity_file.downloader');
-    $fileDownloader->init(
+    $this->fileDownloader->init(
       $entityKey,
       $fieldname,
       $id
     );
 
-    $downloadContent = $fileDownloader->getObjectFilePath() ? file_get_contents($fileDownloader->getObjectFilePath()) : null;
+    $downloadContent = $this->fileDownloader->getObjectFilePath() ? file_get_contents($this->fileDownloader->getObjectFilePath()) : null;
     if (!$downloadContent)
     {
       throw new \Exception('File is empty');
@@ -158,8 +148,8 @@ class FileController
     $response = new Response();
     $response->headers->set('Content-Description', 'File Transfer');
     $response->headers->set('Content-Type', 'application/force-download');
-    $response->headers->set('Content-disposition', 'attachment; filename='.$fileDownloader->getName());
-    $response->headers->set('Content-Length', "{$fileDownloader->getSize()}");
+    $response->headers->set('Content-disposition', 'attachment; filename='.$this->fileDownloader->getName());
+    $response->headers->set('Content-Length', "{$this->fileDownloader->getSize()}");
     $response->headers->set('Expires', '0');
     $response->headers->set('Cache-Control', 'must-revalidate');
     $response->setContent($downloadContent);

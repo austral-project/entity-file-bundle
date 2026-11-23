@@ -24,4 +24,9 @@ final class TestEntityMappingListener extends EntityMappingListener
   {
     $this->checkCropperInterface($classname);
   }
+
+  public function callReplacePath(string $path, string $entitySlugger): string
+  {
+    return $this->replacePath($path, $entitySlugger);
+  }
 }

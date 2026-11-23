@@ -30,7 +30,6 @@ use Austral\FormBundle\Field\UploadField;
 use Austral\FormBundle\Mapper\Fieldset;
 use Austral\ToolsBundle\AustralTools;
 use Doctrine\Common\Collections\Collection;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
@@ -59,11 +58,11 @@ class UploadFormListener
    * @param Mapping<T>           $mapping
    */
   public function __construct(
-    #[Autowire(service: 'austral.entity_file.uploader')] protected FileUploader $fileUploader,
-    #[Autowire(service: 'austral.entity_file.uploads.config')] protected UploadsConfiguration $uploadsConfiguration,
-    #[Autowire(service: 'austral.entity_file.cropper.config')] protected CropperConfiguration $cropperConfiguration,
-    #[Autowire(service: 'austral.entity_file.link.generator')] protected Generator $fileLinkGenerator,
-    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping
+    protected FileUploader $fileUploader,
+    protected UploadsConfiguration $uploadsConfiguration,
+    protected CropperConfiguration $cropperConfiguration,
+    protected Generator $fileLinkGenerator,
+    protected Mapping $mapping
   ) {
   }
 

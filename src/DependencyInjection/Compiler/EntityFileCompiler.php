@@ -53,7 +53,7 @@ class EntityFileCompiler implements CompilerPassInterface
         {
           foreach ($australAdminModules as $moduleKey => $australAdminModule)
           {
-            $bundlesModules[$moduleKey] = array_merge_recursive(AustralTools::getValueByKey($bundlesModules, $moduleKey, []), $australAdminModule);
+            $bundlesModules[$moduleKey] = array_merge_recursive(AustralTools::valueByKey($bundlesModules, $moduleKey, []), $australAdminModule);
           }
           $container->getParameterBag()->remove($keyParameters);
         }

@@ -11,6 +11,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Unit tests for `EntityFileTrait`, `EntityFileCropperTrait` and the cropper check of `EntityMappingListener`.
 - The entity mapping throws a `\LogicException` when an entity uses `EntityFileCropperTrait` or `EntityFileCropperTranslateMasterTrait` without implementing `CropperInterface`.
 - `composer-require-checker.json`: symbols of the optional bundles used by `src/Bridge/` are whitelisted.
+- `tests/DependencyInjection/ContainerTest.php`: compiles the container with and without the bridges, creates every service and checks the public aliases, the command, the controller and the Twig names.
+- Unit tests for the path parameters of `EntityMappingListener`.
 
 ### Changed
 
@@ -21,14 +23,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - `Listener\UploadFormListener` → `Bridge\Form\Listener\UploadFormListener`;
   - `Listener\ConfigurationCheckerListener` → `Bridge\Admin\Listener\ConfigurationCheckerListener`.
 
-  The service ids do not change (`austral.entity_file.form.listener`, `austral.entity_file.configuration_checker.listener`).
+  Their service ids are now `Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener` and `Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener` (see the services entry below).
 - The bridge services (`Resources/config/bridge/form.yaml` and `bridge/admin.yaml`) are loaded when `AustralFormBundle` / `AustralAdminBundle` is registered in the kernel (`kernel.bundles`), instead of reading `config/bundles.php`.
 - `Cropper::$picto` is optional (`?string`).
+- **BREAKING** Services are defined explicitly (no autowiring, no autoconfiguration). Service ids named after a class (`Austral\EntityFileBundle\…`) are private: use the public `austral.entity_file.*` aliases to get a service from the container. Autowiring a class of the bundle in an application still works.
+- **BREAKING** The aliases of the listeners are private (`austral.entity_file.bridge.form.upload.listener`, `austral.entity_file.bridge.admin.configuration_checker.listener`), and the 3.1 aliases `austral.entity_file.doctrine.listener`, `austral.entity_file.entity_mapping.listener`, `austral.entity_file.entity_manager.listener`, `austral.entity_file.form.listener` and `austral.entity_file.configuration_checker.listener` are removed: listeners are called by the dispatchers, not fetched from the container.
+- **BREAKING** `FileController` receives `ImageRender` and `FileDownloader` through its constructor: `setContainer()` and the `$container` property are removed. It is declared as a service with the `controller.service_arguments` tag, instead of being loaded from the `Controller/` folder.
+- **BREAKING** `EntityMappingListener` receives the parameter bag (`ParameterBagInterface $parameterBag`) instead of the service container, to replace the `%parameter%` placeholders of the upload paths.
+- **BREAKING** `CompressCommand` receives `Compression` and `Mapping` through its constructor, and the event dispatcher through `setEventDispatcher()`.
+- **BREAKING** `MediaTwig` extends `AbstractExtension` and its service id is its class name (`twig.extension.media` is a private alias). The Twig names do not change.
+- The setters of `EntityFileCropperTranslateMasterTrait` throw a `\LogicException` when the translation class does not implement `CropperInterface`.
 - **BREAKING** An entity with croppers is detected by `Austral\Contracts\File\CropperInterface` instead of the use of `EntityFileCropperTrait` (or `EntityTranslateMasterFileCropperTrait`): an entity that uses the trait must also implement the interface.
 - The dependencies used by the code are declared in `composer.json` (contracts, Doctrine, Symfony components, Twig), and `ext-fileinfo` is required. `ext-exif` and the optional Austral bundles are listed in `suggest`.
 
 ### Fixed
 
+- The getters of `EntityFileCropperTranslateMasterTrait` no longer fail when the entity has no current translation: they return an empty array, and reading never creates a translation.
 - `Compression` no longer builds the compression command by concatenation: the paths and the options are escaped by Symfony Process.
 
 ### Removed

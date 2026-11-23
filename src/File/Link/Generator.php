@@ -16,7 +16,6 @@ use Austral\Contracts\Translate\TranslateMasterInterface;
 use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Routing\RouterInterface;
 
@@ -44,8 +43,8 @@ class Generator
    * @param string          $defaultLocale
    */
   public function __construct(
-    #[Autowire(service: 'router')] protected RouterInterface $router,
-    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping,
+    protected RouterInterface $router,
+    protected Mapping $mapping,
     string $defaultLocale = 'en'
   ) {
     $this->defaultLocale = $defaultLocale;

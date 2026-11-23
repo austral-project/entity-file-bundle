@@ -19,7 +19,6 @@ use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\Configuration\CropperConfiguration;
 use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 use function Symfony\Component\String\u;
 
@@ -34,19 +33,15 @@ use function Symfony\Component\String\u;
  */
 class ConfigurationCheckerListener
 {
-  protected string $configurationCheckerEventClass = 'Austral\AdminBundle\Event\ConfigurationCheckerEvent';
-  protected string $configurationCheckerClass = 'Austral\AdminBundle\Configuration\ConfigurationChecker';
-  protected string $configurationCheckerValueClass = 'Austral\AdminBundle\Configuration\ConfigurationCheckerValue';
-
   /**
    * @param Mapping<T>           $mapping
    * @param UploadsConfiguration $uploadsConfiguration
    * @param CropperConfiguration $cropperConfiguration
    */
   public function __construct(
-    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping,
-    #[Autowire(service: 'austral.entity_file.uploads.config')] protected UploadsConfiguration $uploadsConfiguration,
-    #[Autowire(service: 'austral.entity_file.cropper.config')] protected CropperConfiguration $cropperConfiguration
+    protected Mapping $mapping,
+    protected UploadsConfiguration $uploadsConfiguration,
+    protected CropperConfiguration $cropperConfiguration
   ) {
   }
 

@@ -20,7 +20,6 @@ use Austral\ToolsBundle\AustralTools;
 use Doctrine\ORM\Events;
 use Doctrine\Persistence\Event\LifecycleEventArgs;
 use Doctrine\Persistence\ObjectManager;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Austral Doctrine Listener.
@@ -40,10 +39,8 @@ class DoctrineListener
    * @param Mapping<T>      $mapping
    * @param FileUploader<T> $fileUploader
    */
-  public function __construct(
-    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping,
-    #[Autowire(service: 'austral.entity_file.uploader')] protected FileUploader $fileUploader
-  ) {
+  public function __construct(protected Mapping $mapping, protected FileUploader $fileUploader)
+  {
   }
 
   /**

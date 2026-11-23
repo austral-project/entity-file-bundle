@@ -16,7 +16,6 @@ use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\File\Image\Image;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -41,10 +40,8 @@ class Cropper
    * @param Image<T>   $image
    * @param Mapping<T> $mapping
    */
-  public function __construct(
-    #[Autowire(service: 'austral.entity_file.image')] protected Image $image,
-    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping
-  ) {
+  public function __construct(protected Image $image, protected Mapping $mapping)
+  {
     $this->filesystem = new Filesystem();
   }
 

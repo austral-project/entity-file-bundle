@@ -18,7 +18,6 @@ use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\EntityFileBundle\File\Upload\FileUploader;
 use Austral\ToolsBundle\AustralTools;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Austral EntityManager Listener.
@@ -33,10 +32,8 @@ class EntityManagerListener
    * @param Mapping<T>      $mapping
    * @param FileUploader<T> $fileUploader
    */
-  public function __construct(
-    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping,
-    #[Autowire(service: 'austral.entity_file.uploader')] protected FileUploader $fileUploader
-  ) {
+  public function __construct(protected Mapping $mapping, protected FileUploader $fileUploader)
+  {
   }
 
   /**

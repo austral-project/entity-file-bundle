@@ -18,7 +18,6 @@ use Austral\EntityFileBundle\File\Cropper\Cropper;
 use Austral\EntityFileBundle\File\Image\Image;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\Form\FormError;
 use Symfony\Component\Form\FormInterface;
@@ -62,10 +61,10 @@ class FileUploader
    * @param Image<T>             $image
    */
   public function __construct(
-    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping,
-    #[Autowire(service: 'austral.entity_file.cropper')] protected Cropper $cropper,
-    #[Autowire(service: 'austral.entity_file.cropper.config')] protected CropperConfiguration $cropperConfiguration,
-    #[Autowire(service: 'austral.entity_file.image')] protected Image $image,
+    protected Mapping $mapping,
+    protected Cropper $cropper,
+    protected CropperConfiguration $cropperConfiguration,
+    protected Image $image,
   ) {
     $this->filesystem = new Filesystem();
     $this->slugger = new AsciiSlugger();

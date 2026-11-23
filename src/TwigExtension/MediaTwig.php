@@ -16,9 +16,9 @@ use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\File\Link\Generator;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Twig\Attribute\AsTwigFilter;
-use Twig\Attribute\AsTwigFunction;
+use Twig\Extension\AbstractExtension;
+use Twig\TwigFilter;
+use Twig\TwigFunction;
 
 /**
  * Austral Media Twig Extension.
@@ -29,7 +29,7 @@ use Twig\Attribute\AsTwigFunction;
  *
  * @final
  */
-class MediaTwig
+class MediaTwig extends AbstractExtension
 {
   /**
    * Cropper constructor
@@ -37,10 +37,48 @@ class MediaTwig
    * @param Generator<T> $generator
    * @param Mapping<T>   $mapping
    */
-  public function __construct(
-    #[Autowire(service: 'austral.entity_file.link.generator')] protected Generator $generator,
-    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping
-  ) {
+  public function __construct(protected Generator $generator, protected Mapping $mapping)
+  {
+  }
+
+  /**
+   * @return TwigFilter[]
+   */
+  public function getFilters()
+  {
+    return [
+      new TwigFilter('austral_entity_file_download_url', [$this, 'download']),
+      new TwigFilter('austral_entity_file_image_url', [$this, 'image']),
+
+      new TwigFilter('austral_entity_file_exist', [$this, 'fileExist']),
+      new TwigFilter('austral_entity_file_size', [$this, 'fileSize']),
+      new TwigFilter('austral_entity_file_mime_type', [$this, 'fileMimeType']),
+      new TwigFilter('austral_entity_file_is_image', [$this, 'isImage']),
+      new TwigFilter('austral_entity_file_image_size', [$this, 'imageSize']),
+      new TwigFilter('austral_entity_file_path', [$this, 'filePath']),
+      new TwigFilter('austral_entity_file_image_ratio', [$this, 'imageRatio']),
+      new TwigFilter('austral_entity_file_parameters', [$this, 'parameters']),
+    ];
+  }
+
+  /**
+   * @return TwigFunction[]
+   */
+  public function getFunctions()
+  {
+    return [
+      'austral_entity_file.download_url' => new TwigFunction('download', [$this, 'download']),
+      'austral_entity_file.image_url' => new TwigFunction('image', [$this, 'image']),
+
+      'austral_entity_file.exist' => new TwigFunction('austral_entity_file.exist', [$this, 'fileExist']),
+      'austral_entity_file.size' => new TwigFunction('austral_entity_file.size', [$this, 'fileSize']),
+      'austral_entity_file.mime_type' => new TwigFunction('austral_entity_file.mime_type', [$this, 'fileMimeType']),
+      'austral_entity_file.is_image' => new TwigFunction('austral_entity_file.is_image', [$this, 'isImage']),
+      'austral_entity_file.image_size' => new TwigFunction('austral_entity_file.image_size', [$this, 'imageSize']),
+      'austral_entity_file.path' => new TwigFunction('austral_entity_file.path', [$this, 'filePath']),
+      'austral_entity_file.image_ratio' => new TwigFunction('austral_entity_file.image_ratio', [$this, 'imageRatio']),
+      'austral_entity_file.parameters' => new TwigFunction('austral_entity_file.parameters', [$this, 'parameters']),
+    ];
   }
 
   /**
@@ -54,8 +92,6 @@ class MediaTwig
    *
    * @throws \Exception
    */
-  #[AsTwigFilter('austral_entity_file.download_url')]
-  #[AsTwigFunction('austral_entity_file_download_url')]
   public function download(FileInterface $object, string $fieldname, array $params = []): ?string
   {
     return $this->generator->download($object, $fieldname, $params);
@@ -76,8 +112,6 @@ class MediaTwig
    *
    * @throws \Exception
    */
-  #[AsTwigFilter('austral_entity_file.image_url')]
-  #[AsTwigFunction('austral_entity_file_image_url')]
   public function image(FileInterface $object, string $fieldname, ?string $type = 'original', ?string $mode = 'resize', ?int $width = null, ?int $height = null, array $params = []): ?string
   {
     return $this->generator->image($object, $fieldname, $type, $mode, $width, $height, $params);
@@ -91,8 +125,6 @@ class MediaTwig
    *
    * @throws \Exception
    */
-  #[AsTwigFilter('austral_entity_file.exist')]
-  #[AsTwigFunction('austral_entity_file_exist')]
   public function fileExist(FileInterface $object, string $fieldname): bool
   {
     return (bool) $this->filePath($object, $fieldname);
@@ -107,8 +139,6 @@ class MediaTwig
    *
    * @throws \Exception
    */
-  #[AsTwigFilter('austral_entity_file.size')]
-  #[AsTwigFunction('austral_entity_file_size')]
   public function fileSize(FileInterface $object, string $fieldname, bool $humanize = false): false|int|string
   {
     if ($filePath = $this->filePath($object, $fieldname))
@@ -127,8 +157,6 @@ class MediaTwig
    *
    * @throws \Exception
    */
-  #[AsTwigFilter('austral_entity_file.mime_type')]
-  #[AsTwigFunction('austral_entity_file_mime_type')]
   public function fileMimeType(FileInterface $object, string $fieldname): ?string
   {
     if ($filePath = $this->filePath($object, $fieldname))
@@ -147,8 +175,6 @@ class MediaTwig
    *
    * @throws \Exception
    */
-  #[AsTwigFilter('austral_entity_file.is_image')]
-  #[AsTwigFunction('austral_entity_file_is_image')]
   public function isImage(FileInterface $object, string $fieldname): bool
   {
     if ($filePath = $this->filePath($object, $fieldname))
@@ -168,8 +194,6 @@ class MediaTwig
    *
    * @throws \Exception
    */
-  #[AsTwigFilter('austral_entity_file.image_size')]
-  #[AsTwigFunction('austral_entity_file_image_size')]
   public function imageSize(FileInterface $object, string $fieldname, bool $returnArray = true): array|string
   {
     if ($filePath = $this->filePath($object, $fieldname))
@@ -188,8 +212,6 @@ class MediaTwig
    *
    * @throws \Exception
    */
-  #[AsTwigFilter('austral_entity_file.path')]
-  #[AsTwigFunction('austral_entity_file_path')]
   public function filePath(FileInterface $object, string $fieldname): ?string
   {
     /** @var FieldFileMapping<T>|null $fieldMapping */
@@ -207,8 +229,6 @@ class MediaTwig
    *
    * @throws \Exception
    */
-  #[AsTwigFilter('austral_entity_file.image_ratio')]
-  #[AsTwigFunction('austral_entity_file_image_ratio')]
   public function imageRatio(FileInterface $object, string $fieldname, ?string $cropperKey = null): ?float
   {
     $ratio = null;
@@ -238,8 +258,6 @@ class MediaTwig
    *
    * @throws \Exception
    */
-  #[AsTwigFilter('austral_entity_file.parameters')]
-  #[AsTwigFunction('austral_entity_file_parameters')]
   public function parameters(?FileInterface $object, string $fieldname): array
   {
     $parameters = [

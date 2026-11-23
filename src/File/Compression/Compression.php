@@ -29,11 +29,6 @@ use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 class Compression
 {
   /**
-   * @var CompressionConfiguration
-   */
-  protected CompressionConfiguration $compressionConfiguration;
-
-  /**
    * @var array<string, string>
    */
   protected array $squooshFormatByFormat = [
@@ -46,9 +41,8 @@ class Compression
   /**
    * @param CompressionConfiguration $compressionConfiguration
    */
-  public function __construct(CompressionConfiguration $compressionConfiguration)
+  public function __construct(protected CompressionConfiguration $compressionConfiguration)
   {
-    $this->compressionConfiguration = $compressionConfiguration;
   }
 
   /**

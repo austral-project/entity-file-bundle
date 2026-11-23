@@ -1,15 +1,18 @@
 services:
-  _defaults:
-    autowire:       true
-    autoconfigure:  true
-    public:         true
 
 ##### Listener
-  austral.entity_file.form.listener:
-    class:          Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener
-    arguments:      ["@austral.entity_file.uploader", "@austral.entity_file.uploads.config", "@austral.entity_file.cropper.config", "@austral.entity_file.link.generator", "@austral.entity.mapping"]
+  Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener:
+    arguments:
+      $fileUploader:          '@austral.entity_file.uploader'
+      $uploadsConfiguration:  '@austral.entity_file.uploads.config'
+      $cropperConfiguration:  '@austral.entity_file.cropper.config'
+      $fileLinkGenerator:     '@austral.entity_file.link.generator'
+      $mapping:               '@austral.entity.mapping'
     tags:
       - { name: kernel.event_listener, event: "austral.event.form.validate", method: validate }
       - { name: kernel.event_listener, event: "austral.event.form.update_before", method: uploads }
       - { name: kernel.event_listener, event: "austral.event.form.add_auto_fields_after", method: formAddAutoFields }
       - { name: kernel.event_listener, event: "austral.event.form.field.configuration", method: fieldConfiguration, priority: -1024 }
+
+  austral.entity_file.bridge.form.upload.listener:
+    alias:  Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener

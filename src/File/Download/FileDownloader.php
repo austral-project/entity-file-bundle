@@ -14,7 +14,6 @@ namespace Austral\EntityFileBundle\File\Download;
 use Austral\Contracts\File\FileInterface;
 use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 
 /**
  * Austral File Download.
@@ -43,7 +42,7 @@ class FileDownloader
    * @param Mapping<T> $mapping
    */
   public function __construct(
-    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping
+    protected Mapping $mapping
   ) {
   }
 

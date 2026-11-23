@@ -90,7 +90,67 @@ The integrations with optional bundles are grouped by target bundle in `src/Brid
 | `Austral\EntityFileBundle\Listener\UploadFormListener` | `Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener` |
 | `Austral\EntityFileBundle\Listener\ConfigurationCheckerListener` | `Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener` |
 
-The service ids do not change. Only a class that extends one of these listeners, or references it by its class name, must be updated.
+Their service ids change too (see "Services: explicit definitions, private class ids"). Only a class that extends one of these listeners, references it by its class name, or decorates its 3.1 service id, must be updated.
+
+### Services: explicit definitions, private class ids
+
+The services of the bundle are no longer autowired nor autoconfigured: each one is defined with its arguments and tags. As a result, the service ids named after a class are **private**. The `austral.entity_file.*` aliases below are public, and they are the supported way to get a service from the container.
+
+| Class | Public alias |
+|-------|--------------|
+| `Configuration\UploadsConfiguration` | `austral.entity_file.uploads.config` |
+| `Configuration\CropperConfiguration` | `austral.entity_file.cropper.config` |
+| `Configuration\ImageSizeConfiguration` | `austral.entity_file.image_size.config` |
+| `Configuration\CompressionConfiguration` | `austral.entity_file.compression.config` |
+| `File\Upload\FileUploader` | `austral.entity_file.uploader` |
+| `File\Download\FileDownloader` | `austral.entity_file.downloader` |
+| `File\Image\Image` | `austral.entity_file.image` |
+| `File\Image\ImageRender` | `austral.entity_file.image.render` |
+| `File\Link\Generator` | `austral.entity_file.link.generator` |
+| `File\Cropper\Cropper` | `austral.entity_file.cropper` |
+| `File\Compression\Compression` | `austral.entity_file.compression` |
+
+Before:
+
+```php
+$uploader = $container->get(\Austral\EntityFileBundle\File\Upload\FileUploader::class);
+```
+
+After:
+
+```php
+$uploader = $container->get('austral.entity_file.uploader');
+```
+
+Injecting a service is not affected: autowiring `Austral\EntityFileBundle\File\Upload\FileUploader` in a constructor of your application keeps working, and so does a reference to an alias in YAML (`'@austral.entity_file.uploader'`).
+
+**Listeners.** They are called by the dispatchers and are not meant to be fetched, so their aliases are private, and the 3.1 aliases are removed:
+
+| 3.1 alias (removed) | 4.0 service id |
+|---------------------|----------------|
+| `austral.entity_file.doctrine.listener` | `Austral\EntityFileBundle\Listener\DoctrineListener` |
+| `austral.entity_file.entity_mapping.listener` | `Austral\EntityFileBundle\Listener\EntityMappingListener` |
+| `austral.entity_file.entity_manager.listener` | `Austral\EntityFileBundle\Listener\EntityManagerListener` |
+| `austral.entity_file.form.listener` | `Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener` |
+| `austral.entity_file.configuration_checker.listener` | `Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener` |
+
+> **Warning:** a service of your application that decorates one of these listeners by its 3.1 alias (`decorates: austral.entity_file.form.listener`) makes the container compilation fail. Decorate the 4.0 service id instead.
+
+The Twig extension `MediaTwig` is registered under its class name; `twig.extension.media` is a private alias. The names used in templates do not change.
+
+### No more service container in the controller, the command and the mapping listener
+
+`FileController`, `CompressCommand` and `EntityMappingListener` no longer receive the service container:
+
+| Class | 3.1 | 4.0 |
+|-------|-----|-----|
+| `Controller\FileController` | `setContainer()`, then `$this->container->get('austral.entity_file.image.render')` / `->get('austral.entity_file.downloader')` | constructor: `ImageRender $imageRender`, `FileDownloader $fileDownloader` |
+| `Command\CompressCommand` | `$this->container->get(…)` | constructor: `Compression $compression`, `Mapping $mapping`; event dispatcher through `setEventDispatcher()` |
+| `Listener\EntityMappingListener` | constructor: `ContainerInterface $container` | constructor: `ParameterBagInterface $parameterBag` |
+
+`FileController` is declared as a service with the `controller.service_arguments` tag; the routes of the bundle (`austral_entity_file_thumbnail`, `austral_entity_file_download`) do not change.
+
+A class of yours that extends one of these classes must call the new constructor, and replace `$this->container` by the injected services.
 
 ### Cropper trait for translated entities
 
@@ -102,6 +162,8 @@ The service ids do not change. Only a class that extends one of these listeners,
 ```
 
 Rename the `use` inside the class as well.
+
+Reading a cropper value (`getCropperData()`, `getCropperDataByFilename()`, `getGenerateCropperByKey()`) never creates a translation: without a current translation, it returns an empty array. Writing a value (`setCropperData()`, `setGenerateCropperByKey()`) creates the current translation when needed, and throws a `\LogicException` when the translation class does not implement `CropperInterface`.
 
 ### Updating a project
 

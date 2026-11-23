@@ -23,8 +23,7 @@ use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
 use Austral\EntityFileBundle\Entity\Traits\EntityFileCropperTrait;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 /**
  * Austral EntityAttribute Listener.
@@ -36,16 +35,16 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class EntityMappingListener
 {
   /**
-   * @param ContainerInterface     $container
+   * @param ParameterBagInterface  $parameterBag
    * @param UploadsConfiguration   $uploadsConfiguration
    * @param CropperConfiguration   $cropperConfiguration
    * @param ImageSizeConfiguration $imageSizeConfiguration
    */
   public function __construct(
-    #[Autowire(service: 'service_container')] protected ContainerInterface $container,
-    #[Autowire(service: 'austral.entity_file.uploads.config')] protected UploadsConfiguration $uploadsConfiguration,
-    #[Autowire(service: 'austral.entity_file.cropper.config')] protected CropperConfiguration $cropperConfiguration,
-    #[Autowire(service: 'austral.entity_file.image_size.config')] protected ImageSizeConfiguration $imageSizeConfiguration,
+    protected ParameterBagInterface $parameterBag,
+    protected UploadsConfiguration $uploadsConfiguration,
+    protected CropperConfiguration $cropperConfiguration,
+    protected ImageSizeConfiguration $imageSizeConfiguration,
   ) {
   }
 
@@ -233,8 +232,11 @@ class EntityMappingListener
     preg_match_all("|%(\S+)%|iuU", $path, $matches, PREG_SET_ORDER);
     foreach ($matches as $match)
     {
-      $parameter = $this->container->getParameter($match[1]);
-      $path = $parameter && is_string($parameter) ? str_replace($match[0], $parameter, $path) : $path;
+      if ($this->parameterBag->has($match[1]))
+      {
+        $parameter = $this->parameterBag->get($match[1]);
+        $path = $parameter && is_string($parameter) ? str_replace($match[0], $parameter, $path) : $path;
+      }
     }
 
     return str_replace('@entity_slugger_case@', $entitySlugger, $path);

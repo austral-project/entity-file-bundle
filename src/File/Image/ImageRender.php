@@ -18,7 +18,6 @@ use Austral\EntityFileBundle\File\Compression\Compression;
 use Austral\EntityFileBundle\File\Cropper\Cropper;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\ToolsBundle\AustralTools;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -47,11 +46,11 @@ class ImageRender
    * @param Compression          $compression
    */
   public function __construct(
-    #[Autowire(service: 'austral.entity.mapping')] protected Mapping $mapping,
-    #[Autowire(service: 'austral.entity_file.image')] protected Image $imageLib,
-    #[Autowire(service: 'austral.entity_file.uploads.config')] protected UploadsConfiguration $uploadsConfiguration,
-    #[Autowire(service: 'austral.entity_file.cropper')] protected Cropper $cropper,
-    #[Autowire(service: 'austral.entity_file.compression')] protected Compression $compression,
+    protected Mapping $mapping,
+    protected Image $imageLib,
+    protected UploadsConfiguration $uploadsConfiguration,
+    protected Cropper $cropper,
+    protected Compression $compression,
   ) {
     $this->filesystem = new Filesystem();
   }

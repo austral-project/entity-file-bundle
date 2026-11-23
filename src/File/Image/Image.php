@@ -17,7 +17,6 @@ use Imagine\Image\Box;
 use Imagine\Image\BoxInterface;
 use Imagine\Image\ManipulatorInterface;
 use Imagine\Image\Point;
-use Symfony\Component\DependencyInjection\Attribute\Autowire;
 use Symfony\Component\Filesystem\Filesystem;
 
 /**
@@ -57,10 +56,8 @@ class Image
    * @param string      $imagineLib
    * @param Compression $compression
    */
-  public function __construct(
-    string $imagineLib,
-    #[Autowire(service: 'austral.entity_file.compression')] protected Compression $compression
-  ) {
+  public function __construct(string $imagineLib, protected Compression $compression)
+  {
     $this->imagine = new $imagineLib();
     $this->fileSystem = new Filesystem();
   }

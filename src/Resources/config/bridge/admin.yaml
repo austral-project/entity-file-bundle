@@ -1,12 +1,14 @@
 services:
-  _defaults:
-    autowire:       true
-    autoconfigure:  true
-    public:         true
 
 ##### Listener
-  austral.entity_file.configuration_checker.listener:
+  Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener:
     class:          Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener
-    arguments:      ["@austral.entity.mapping","@austral.entity_file.uploads.config", "@austral.entity_file.cropper.config"]
+    arguments:
+      $mapping:               '@austral.entity.mapping'
+      $uploadsConfiguration:  '@austral.entity_file.uploads.config'
+      $cropperConfiguration:  '@austral.entity_file.cropper.config'
     tags:
       - { name: kernel.event_listener, event: "austral.event.admin.configuration_checker", method: configurationChecker }
+
+  austral.entity_file.bridge.admin.configuration_checker.listener:
+    alias:          Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener

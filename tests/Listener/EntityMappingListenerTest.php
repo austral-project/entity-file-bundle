@@ -20,7 +20,7 @@ use Austral\EntityFileBundle\Tests\Fixtures\CropperWithoutInterfaceEntity;
 use Austral\EntityFileBundle\Tests\Fixtures\FileEntity;
 use Austral\EntityFileBundle\Tests\Fixtures\TestEntityMappingListener;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\DependencyInjection\ParameterBag\ParameterBag;
 
 final class EntityMappingListenerTest extends TestCase
 {
@@ -46,10 +46,33 @@ final class EntityMappingListenerTest extends TestCase
     $this->createListener()->callCheckCropperInterface(CropperWithoutInterfaceEntity::class);
   }
 
-  private function createListener(): TestEntityMappingListener
+  public function testPathParametersAndEntitySluggerAreReplaced(): void
+  {
+    $listener = $this->createListener(['kernel.project_dir' => '/var/www', 'austral.uploads' => 'uploads']);
+
+    self::assertSame(
+      '/var/www/public/uploads/my_entity',
+      $listener->callReplacePath('%kernel.project_dir%/public/%austral.uploads%/@entity_slugger_case@', 'my_entity')
+    );
+  }
+
+  public function testUnknownOrNonStringParametersAreLeftAsTheyAre(): void
+  {
+    $listener = $this->createListener(['austral.sizes' => [100, 200], 'austral.empty' => '']);
+
+    self::assertSame(
+      '%unknown.parameter%/%austral.sizes%/%austral.empty%/file',
+      $listener->callReplacePath('%unknown.parameter%/%austral.sizes%/%austral.empty%/file', 'my_entity')
+    );
+  }
+
+  /**
+   * @param array<string, mixed> $parameters
+   */
+  private function createListener(array $parameters = []): TestEntityMappingListener
   {
     return new TestEntityMappingListener(
-      $this->createMock(ContainerInterface::class),
+      new ParameterBag($parameters),
       $this->createMock(UploadsConfiguration::class),
       $this->createMock(CropperConfiguration::class),
       $this->createMock(ImageSizeConfiguration::class)

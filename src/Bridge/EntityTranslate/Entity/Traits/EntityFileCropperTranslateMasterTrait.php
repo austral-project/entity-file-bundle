@@ -50,13 +50,24 @@ trait EntityFileCropperTranslateMasterTrait
   }
 
   /**
+   * Current translation for a write, created when needed.
+   *
+   * @throws \LogicException when the translation class does not implement CropperInterface
+   */
+  private function getCropperOrFail(): CropperInterface
+  {
+    return $this->getTranslateCurrentCropper(true)
+      ?? throw new \LogicException(sprintf('The translation class "%s" of "%s" must implement %s.', $this->getTranslateClassname(), static::class, CropperInterface::class));
+  }
+
+  /**
    * @return array<string, mixed>
    *
    * @throws \Exception
    */
   public function getCropperData(): array
   {
-    return $this->getTranslateCurrentCropper() ? $this->getTranslateCurrentCropper()->getCropperData() : [];
+    return $this->getTranslateCurrentCropper()?->getCropperData() ?? [];
   }
 
   /**
@@ -64,11 +75,11 @@ trait EntityFileCropperTranslateMasterTrait
    *
    * @return $this
    *
-   * @throws \Exception
+   * @throws \LogicException when the translation class does not implement CropperInterface
    */
   public function setCropperData(array $cropperData): self
   {
-    $this->getTranslateCurrentCropper(true)->setCropperData($cropperData);
+    $this->getCropperOrFail()->setCropperData($cropperData);
 
     return $this;
   }
@@ -82,7 +93,7 @@ trait EntityFileCropperTranslateMasterTrait
    */
   public function getCropperDataByFilename(string $filename): array
   {
-    return $this->getTranslateCurrentCropper() ? $this->getTranslateCurrentCropper()->getCropperDataByFilename($filename) : [];
+    return $this->getTranslateCurrentCropper()?->getCropperDataByFilename($filename) ?? [];
   }
 
   /**
@@ -92,19 +103,19 @@ trait EntityFileCropperTranslateMasterTrait
    */
   public function getGenerateCropperByKey(): array
   {
-    return $this->getTranslateCurrentCropper() ? $this->getTranslateCurrentCropper()->getGenerateCropperByKey() : [];
+    return $this->getTranslateCurrentCropper()?->getGenerateCropperByKey() ?? [];
   }
 
   /**
-   * @param array $generateCropperByKey
+   * @param array<string, mixed> $generateCropperByKey
    *
    * @return $this
    *
-   * @throws \Exception
+   * @throws \LogicException when the translation class does not implement CropperInterface
    */
   public function setGenerateCropperByKey(array $generateCropperByKey): self
   {
-    $this->getTranslateCurrentCropper(true)->setGenerateCropperByKey($generateCropperByKey);
+    $this->getCropperOrFail()->setGenerateCropperByKey($generateCropperByKey);
 
     return $this;
   }
