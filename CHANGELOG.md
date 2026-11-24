@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - **BREAKING** The aliases of the listeners are private (`austral.entity_file.bridge.form.upload.listener`, `austral.entity_file.bridge.admin.configuration_checker.listener`), and the 3.1 aliases `austral.entity_file.doctrine.listener`, `austral.entity_file.entity_mapping.listener`, `austral.entity_file.entity_manager.listener`, `austral.entity_file.form.listener` and `austral.entity_file.configuration_checker.listener` are removed: listeners are called by the dispatchers, not fetched from the container.
 - **BREAKING** `FileController` receives `ImageRender` and `FileDownloader` through its constructor: `setContainer()` and the `$container` property are removed. It is declared as a service with the `controller.service_arguments` tag, instead of being loaded from the `Controller/` folder.
 - **BREAKING** `EntityMappingListener` receives the parameter bag (`ParameterBagInterface $parameterBag`) instead of the service container, to replace the `%parameter%` placeholders of the upload paths.
+- **BREAKING** `DoctrineListener` is a Doctrine event listener (tag `doctrine.event_listener` on `preRemove`) and no longer implements `Doctrine\Common\EventSubscriber`. `preRemove()` receives a `Doctrine\ORM\Event\PreRemoveEventArgs` (it received `Doctrine\ORM\Event\LifecycleEventArgs`, removed in Doctrine ORM 3). The listener is registered on every connection (in 3.1, only on the `default` connection).
 - **BREAKING** `CompressCommand` receives `Compression` and `Mapping` through its constructor, and the event dispatcher through `setEventDispatcher()`.
 - **BREAKING** `MediaTwig` extends `AbstractExtension` and its service id is its class name (`twig.extension.media` is a private alias). The Twig names do not change.
 - The setters of `EntityFileCropperTranslateMasterTrait` throw a `\LogicException` when the translation class does not implement `CropperInterface`.
@@ -44,6 +45,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Removed
 
 - **BREAKING** `Austral\EntityFileBundle\Entity\Interfaces\FileInterface` and `CropperInterface`: use `Austral\Contracts\File\FileInterface` and `Austral\Contracts\File\CropperInterface` (austral/contracts), without alias.
+
+- **BREAKING** `DoctrineListener::getSubscribedEvents()`, `getEventAdapter()` and `getNamespace()`: the listener is registered by its tag.
 
 - **BREAKING** `Austral\EntityTranslateBundle\Entity\Traits\EntityTranslateMasterFileCropperTrait` no longer exists in entity-translate-bundle: it is replaced by `Austral\EntityFileBundle\Bridge\EntityTranslate\Entity\Traits\EntityFileCropperTranslateMasterTrait`.
 

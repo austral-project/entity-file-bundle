@@ -17,6 +17,7 @@ use Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener;
 use Austral\EntityFileBundle\Command\CompressCommand;
 use Austral\EntityFileBundle\Controller\FileController;
 use Austral\EntityFileBundle\DependencyInjection\AustralEntityFileExtension;
+use Austral\EntityFileBundle\Listener\DoctrineListener;
 use Austral\EntityFileBundle\TwigExtension\MediaTwig;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -167,6 +168,17 @@ final class ContainerTest extends TestCase
     self::assertInstanceOf(CompressCommand::class, $command);
     $dispatcher = new \ReflectionProperty($command, 'eventDispatcher')->getValue($command);
     self::assertInstanceOf(EventDispatcherInterface::class, $dispatcher);
+  }
+
+  /**
+   * A Doctrine event listener (not a subscriber), on every connection.
+   */
+  public function testTheDoctrineListenerListensToPreRemove(): void
+  {
+    $tags = self::loadExtension(withBridges: false)->getDefinition(DoctrineListener::class)->getTag('doctrine.event_listener');
+
+    self::assertSame([['event' => 'preRemove']], $tags);
+    self::assertSame([], self::loadExtension(withBridges: false)->findTaggedServiceIds('doctrine.event_subscriber'));
   }
 
   public function testTheTwigExtensionIsTaggedAndDeclaresTheTemplateNames(): void

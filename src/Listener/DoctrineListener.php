@@ -16,15 +16,11 @@ use Austral\Contracts\Translate\TranslateChildInterface;
 use Austral\EntityBundle\Mapping\Mapping;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\EntityFileBundle\File\Upload\FileUploader;
-use Austral\ToolsBundle\AustralTools;
-use Doctrine\ORM\Events;
-use Doctrine\Persistence\Event\LifecycleEventArgs;
-use Doctrine\Persistence\ObjectManager;
+use Doctrine\ORM\Event\PreRemoveEventArgs;
 
 /**
  * Austral Doctrine Listener.
  *
- * @template TObjectManager of ObjectManager
  * @template T of object
  *
  * @author Matthieu Beurel <matthieu@austral.dev>
@@ -44,31 +40,16 @@ class DoctrineListener
   }
 
   /**
-   * @return string[]
-   */
-  public function getSubscribedEvents(): array
-  {
-    return [
-      Events::preRemove,
-    ];
-  }
-
-  /**
-   * @param LifecycleEventArgs<TObjectManager> $args
+   * @param PreRemoveEventArgs $args
    *
    * @throws \Exception
    */
-  public function preRemove(LifecycleEventArgs $args): void
+  public function preRemove(PreRemoveEventArgs $args): void
   {
     $object = $args->getObject();
-    if (!$object instanceof FileInterface)
+    if (!$object instanceof FileInterface && $object instanceof TranslateChildInterface)
     {
-      if (AustralTools::usedImplements(get_class($object), "Austral\Contracts\Translate\TranslateChildInterface"))
-      {
-        /** @var TranslateChildInterface<T> $childObject */
-        $childObject = $args->getObject();
-        $object = $childObject->getMaster();
-      }
+      $object = $object->getMaster();
     }
     if ($object instanceof FileInterface)
     {

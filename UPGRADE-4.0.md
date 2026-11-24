@@ -152,6 +152,10 @@ The Twig extension `MediaTwig` is registered under its class name; `twig.extensi
 
 A class of yours that extends one of these classes must call the new constructor, and replace `$this->container` by the injected services.
 
+### Doctrine listener
+
+`DoctrineListener` no longer implements `Doctrine\Common\EventSubscriber`: it is registered with a `doctrine.event_listener` tag on `preRemove`, on every connection (in 3.1, only on the `default` connection). `preRemove()` receives a `Doctrine\ORM\Event\PreRemoveEventArgs` instead of `Doctrine\ORM\Event\LifecycleEventArgs`, and `getSubscribedEvents()`, `getEventAdapter()` and `getNamespace()` are removed. A class of yours that extends the listener must update the signature of `preRemove()`.
+
 ### Cropper trait for translated entities
 
 `EntityTranslateMasterFileCropperTrait` of entity-translate-bundle is replaced by a trait of entity-file-bundle:
