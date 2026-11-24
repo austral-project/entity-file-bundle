@@ -79,6 +79,6 @@ class AustralEntityFileExtension extends Extension
    */
   public function getNamespace(): string
   {
-    return 'https://austral.app/schema/dic/austral_entity_file';
+    return 'https://austral.dev/schema/dic/austral_entity_file';
   }
 }
