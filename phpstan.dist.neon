@@ -11,5 +11,6 @@ parameters:
   # analysed again once those bundles are added to require-dev.
   excludePaths:
     analyse:
-      - src/Bridge
+      - src/Bridge/Admin
+      - src/Bridge/EntityTranslate
   tmpDir: var/phpstan

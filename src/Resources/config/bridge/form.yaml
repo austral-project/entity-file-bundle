@@ -1,18 +1,23 @@
 services:
 
-##### Listener
+  ##### Listener
   Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener:
     arguments:
-      $fileUploader:          '@austral.entity_file.uploader'
-      $uploadsConfiguration:  '@austral.entity_file.uploads.config'
-      $cropperConfiguration:  '@austral.entity_file.cropper.config'
-      $fileLinkGenerator:     '@austral.entity_file.link.generator'
-      $mapping:               '@austral.entity.mapping'
+      $fileUploader:  '@austral.entity_file.uploader'
+      $mapping:       '@austral.entity.mapping'
     tags:
-      - { name: kernel.event_listener, event: "austral.event.form.validate", method: validate }
-      - { name: kernel.event_listener, event: "austral.event.form.update_before", method: uploads }
-      - { name: kernel.event_listener, event: "austral.event.form.add_auto_fields_after", method: formAddAutoFields }
-      - { name: kernel.event_listener, event: "austral.event.form.field.configuration", method: fieldConfiguration, priority: -1024 }
+      - { name: kernel.event_listener, event: "austral.form.configure_after", method: configure }
+      - { name: kernel.event_listener, event: "austral.form.field.build", method: buildField }
+      - { name: kernel.event_listener, event: "austral.form.submit", method: validate }
+      - { name: kernel.event_listener, event: "austral.form.save_before", method: uploads }
 
   austral.entity_file.bridge.form.upload.listener:
     alias:  Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener
+
+  ##### Form type extension: description of the uploaded file
+  Austral\EntityFileBundle\Bridge\Form\Extension\UploadFileTypeExtension:
+    arguments:
+      $mapping:           '@austral.entity.mapping'
+      $fileLinkGenerator: '@austral.entity_file.link.generator'
+    tags:
+      - { name: form.type_extension }

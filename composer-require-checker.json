@@ -4,11 +4,13 @@
     "Austral\\AdminBundle\\Configuration\\ConfigurationCheckerValue",
     "Austral\\AdminBundle\\Event\\ConfigurationCheckerEvent",
     "Austral\\EntityTranslateBundle\\Entity\\Traits\\EntityTranslateMasterTrait",
-    "Austral\\FormBundle\\Event\\FormEvent",
-    "Austral\\FormBundle\\Event\\FormFieldEvent",
+    "Austral\\FormBundle\\Event\\FieldBuildEvent",
+    "Austral\\FormBundle\\Event\\FormMapperEvent",
+    "Austral\\FormBundle\\Event\\FormProcessEvent",
     "Austral\\FormBundle\\Field\\SymfonyField",
     "Austral\\FormBundle\\Field\\UploadField",
-    "Austral\\FormBundle\\Mapper\\Fieldset",
+    "Austral\\FormBundle\\Layout\\Fieldset",
+    "Austral\\FormBundle\\Mapper\\FormMapper",
     "exif_read_data"
   ],
   "php-core-extensions": [

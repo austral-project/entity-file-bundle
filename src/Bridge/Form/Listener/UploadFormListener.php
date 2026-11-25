@@ -11,430 +11,291 @@
 
 namespace Austral\EntityFileBundle\Bridge\Form\Listener;
 
-use Austral\Contracts\Entity\EntityInterface;
 use Austral\Contracts\File\CropperInterface;
 use Austral\Contracts\File\FileInterface;
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityFileBundle\Attribute\Cropper;
-use Austral\EntityFileBundle\Configuration\CropperConfiguration;
-use Austral\EntityFileBundle\Configuration\UploadsConfiguration;
 use Austral\EntityFileBundle\Exception\FormUploadException;
-use Austral\EntityFileBundle\File\Link\Generator;
 use Austral\EntityFileBundle\File\Mapping\FieldFileMapping;
 use Austral\EntityFileBundle\File\Upload\FileUploader;
 use Austral\EntityFileBundle\Validator\SvgSecurity;
-use Austral\FormBundle\Event\FormEvent;
-use Austral\FormBundle\Event\FormFieldEvent;
-use Austral\FormBundle\Field;
+use Austral\FormBundle\Event\FieldBuildEvent;
+use Austral\FormBundle\Event\FormMapperEvent;
+use Austral\FormBundle\Event\FormProcessEvent;
+use Austral\FormBundle\Field\SymfonyField;
 use Austral\FormBundle\Field\UploadField;
-use Austral\FormBundle\Mapper\Fieldset;
-use Austral\ToolsBundle\AustralTools;
-use Doctrine\Common\Collections\Collection;
+use Austral\FormBundle\Layout\Fieldset;
+use Austral\FormBundle\Mapper\FormMapper;
 use Symfony\Component\Form\Extension\Core\Type\HiddenType;
-use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
-use Symfony\Component\Mime\MimeTypes;
-use Symfony\Component\Validator\Constraints;
-use Symfony\Component\Validator\Constraints\File;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\NotNull;
 
 /**
- * Austral UploadFormListener Listener.
+ * Austral Upload Form Listener.
  *
- * @template T of object
+ * Integrates the files of entity-file in the Austral forms (form-bundle 4):
+ *  - configure_after: each UploadField of a FileInterface form is configured from its Doctrine file mapping
+ *    (MIME types, size, messages, croppers, image sizes), and the hidden fields it needs are added (deletion
+ *    of the file, cropper data) with the modal of the editor;
+ *  - field.build: an upload field is never required by the form (the required file is checked on submit),
+ *    and receives Length and SvgSecurity; File and Image are added by UploadField itself, from its options;
+ *  - submit: the required files are checked;
+ *  - save_before: the files are uploaded, cropped or deleted.
+ * form-bundle dispatches the events for each entry of the collections: every object is handled with its form.
  *
  * @author Matthieu Beurel <matthieu@austral.dev>
- *
- * @final
  */
-class UploadFormListener
+final class UploadFormListener
 {
   /**
-   * FormListener constructor.
-   *
-   * @param FileUploader<T>      $fileUploader
-   * @param UploadsConfiguration $uploadsConfiguration
-   * @param CropperConfiguration $cropperConfiguration
-   * @param Generator<T>         $fileLinkGenerator
-   * @param Mapping<T>           $mapping
+   * Fieldset of the hidden fields added by entity-file (not shown).
    */
-  public function __construct(
-    protected FileUploader $fileUploader,
-    protected UploadsConfiguration $uploadsConfiguration,
-    protected CropperConfiguration $cropperConfiguration,
-    protected Generator $fileLinkGenerator,
-    protected Mapping $mapping
-  ) {
+  public const string HIDDEN_FIELDSET = 'hidden';
+
+  /**
+   * @param FileUploader<object> $fileUploader
+   * @param Mapping<object>      $mapping
+   */
+  public function __construct(private readonly FileUploader $fileUploader, private readonly Mapping $mapping)
+  {
   }
 
   /**
-   * @param FormEvent<T> $formEvent
-   *
-   * @return void
-   *
-   * @throws \Exception
-   */
-  public function validate(FormEvent $formEvent): void
-  {
-    if ($formEvent->getFormMapper()->getObject() instanceof FileInterface)
-    {
-      if ($formEvent->getForm())
-      {
-        $objects = [];
-        $data = $formEvent->getForm()->getData();
-        if ($data instanceof Collection)
-        {
-          $objects = $data->toArray();
-        }
-        else
-        {
-          $objects[] = $data;
-        }
-        $this->validateObjects($formEvent->getForm(), $objects);
-      }
-    }
-  }
-
-  /**
-   * @param FormInterface                                                       $form
-   * @param array<string, EntityInterface<T>|array<string, EntityInterface<T>>> $objects
-   *
-   * @return void
-   *
-   * @throws \Exception
-   */
-  protected function validateObjects(FormInterface $form, array $objects): void
-  {
-    /** @var EntityInterface<T>|array<string, EntityInterface<T>> $object */
-    foreach ($objects as $object)
-    {
-      if (is_array($object))
-      {
-        $this->validateObjects($form, $object);
-      }
-      elseif ($object instanceof FileInterface)
-      {
-        $this->fileUploader->validateRequiredFiles($form, $object);
-      }
-    }
-  }
-
-  /**
-   * @param FormEvent<T> $formEvent
+   * @param FormMapperEvent $event
    *
    * @return void
    */
-  public function uploads(FormEvent $formEvent): void
+  public function configure(FormMapperEvent $event): void
   {
-    try
-    {
-      if ($formEvent->getFormMapper()->getObject() instanceof FileInterface)
-      {
-        $objects = [];
-        if ($formEvent->getForm())
-        {
-          $data = $formEvent->getForm()->getData();
-          if ($data instanceof Collection)
-          {
-            $objects = $data->toArray();
-          }
-          else
-          {
-            $objects[] = $data;
-          }
-          $this->uploadsObjects($formEvent->getForm(), $objects);
-        }
-      }
-    }
-    catch (\Exception $e)
-    {
-      $formEvent->getFormMapper()->setFormStatus('exception');
-      throw new FormUploadException($e->getMessage());
-    }
-  }
-
-  /**
-   * @param FormInterface                                                       $form
-   * @param array<string, EntityInterface<T>|array<string, EntityInterface<T>>> $objects
-   *
-   * @return void
-   *
-   * @throws \Exception
-   */
-  protected function uploadsObjects(FormInterface $form, array $objects): void
-  {
-    /** @var EntityInterface<T>|array<string, EntityInterface<T>> $object */
-    foreach ($objects as $object)
-    {
-      if (is_array($object))
-      {
-        $this->uploadsObjects($form, $object);
-      }
-      elseif ($object instanceof FileInterface)
-      {
-        $this->fileUploader->uploadFiles($form, $object);
-      }
-    }
-  }
-
-  /**
-   * @param FormEvent<T> $formEvent
-   *
-   * @return void
-   *
-   * @throws \Exception
-   */
-  public function formAddAutoFields(FormEvent $formEvent): void
-  {
-    $object = $formEvent->getFormMapper()->getObject();
-    if ($object instanceof CropperInterface)
-    {
-      $cropperIsEnabled = false;
-      foreach ($formEvent->getFormMapper()->allFields() as $field)
-      {
-        if ($field instanceof UploadField)
-        {
-          if ($field->getCropper())
-          {
-            $cropperIsEnabled = true;
-          }
-        }
-      }
-
-      $fieldsetHidden = $formEvent->getFormMapper()
-        ->addFieldset('hidden')
-        ->setPositionName(Fieldset::POSITION_NONE);
-      if ($cropperIsEnabled)
-      {
-        $fieldsetHidden->add(Field\SymfonyField::create('cropperData', HiddenType::class, [
-          'setter' => function ($object, $value) {
-            $object->setCropperData($value ? json_decode($value, true) : []);
-          },
-          'getter' => function ($object) {
-            return json_encode($object->getCropperData());
-          },
-          'attr' => [
-            'data-cropper-data' => '',
-            'autocomplete' => 'off',
-          ],
-        ]));
-        $fieldsetHidden->add(Field\SymfonyField::create('generateCropperByKey', HiddenType::class, [
-          'setter' => function ($object, $value) {
-            $object->setGenerateCropperByKey(json_decode($value ?: '[]', true));
-          },
-          'getter' => function ($object) {
-            return json_encode($object->getGenerateCropperByKey());
-          },
-          'attr' => [
-            'data-cropper-key-generate' => '',
-            'autocomplete' => 'off',
-          ],
-        ]));
-      }
-    }
-  }
-
-  /**
-   * @param FormFieldEvent<T> $formFieldEvent
-   *
-   * @return void
-   *
-   * @throws \Exception
-   */
-  public function fieldConfiguration(FormFieldEvent $formFieldEvent): void
-  {
-    $object = $formFieldEvent->getFormMapper()->getObject();
-    if ($formFieldEvent->getField() instanceof UploadField && $object instanceof FileInterface)
-    {
-      /** @var FieldFileMapping<T>|null $fieldMapping */
-      $fieldMapping = $this->mapping->getFieldsMappingByFieldname($object->getClassnameForMapping(), FieldFileMapping::class, $formFieldEvent->getField()->getFieldname());
-      if ($fieldMapping)
-      {
-        /** @var UploadField<T> $field */
-        $field = $formFieldEvent->getField();
-
-        if (!$field->getMimeTypes())
-        {
-          $field->setMimeTypes($fieldMapping->uploadParameters->mimeTypes);
-        }
-
-        $field->setTypeFile($fieldMapping->uploadParameters->getTypeFile());
-
-        if (!$field->getMaxSize(false, false) && $fieldMapping->uploadParameters->sizeMax)
-        {
-          $field->setMaxSize($fieldMapping->uploadParameters->sizeMax);
-        }
-
-        if (!$field->getMaxSizeMessage(false))
-        {
-          $field->setMaxSizeMessage($fieldMapping->uploadParameters->errorMaxSize);
-        }
-
-        if (!$field->getMimeTypesMessage(false))
-        {
-          $field->setMimeTypesMessage($fieldMapping->uploadParameters->errorMimeTypes);
-        }
-
-        if (!$field->getCropper() && $fieldMapping->croppers)
-        {
-          $cropperFinal = [];
-          /** @var Cropper<T> $cropper */
-          foreach ($fieldMapping->croppers->croppers as $cropper)
-          {
-            $cropperFinal[$cropper->key] = (array) $cropper;
-          }
-          $field->setCropper($cropperFinal);
-        }
-
-        if (!$field->getImageSizes() && $fieldMapping->imageSize && $fieldMapping->imageSize->hasLimit())
-        {
-          $field->setImageSizes([
-            'minWidth' => (int) $fieldMapping->imageSize->widthMin,
-            'maxWidth' => (int) $fieldMapping->imageSize->widthMax,
-            'minHeight' => (int) $fieldMapping->imageSize->heightMin,
-            'maxHeight' => (int) $fieldMapping->imageSize->heightMax,
-          ]);
-        }
-
-        if ($field->getAutoConstraints())
-        {
-          $field->addConstraint(new Constraints\Length(max: 255, maxMessage: 'errors.length.max'));
-
-          $extensions = [];
-          foreach ($field->getMimeTypes() as $mimeType)
-          {
-            $extensions = array_merge($extensions, MimeTypes::getDefault()->getExtensions($mimeType));
-          }
-          $field->addConstraint(new File(
-            maxSize: $field->getMaxSize(),
-            extensions: array_values(array_unique($extensions)),
-            mimeTypes: $field->getMimeTypes(),
-            maxSizeMessage: $field->getMaxSizeMessage(),
-            mimeTypesMessage: $field->getMimeTypesMessage()
-          ));
-          $field->addConstraint(new SvgSecurity());
-
-          if ($imageSizes = $field->getImageSizes())
-          {
-            $field->addConstraint(
-              new Constraints\Image(
-                [
-                  'minWidth' => $imageSizes['minWidth'],
-                  'maxWidth' => $imageSizes['maxWidth'],
-                  'minHeight' => $imageSizes['minHeight'],
-                  'maxHeight' => $imageSizes['maxHeight'],
-                ]
-              )
-            );
-          }
-        }
-
-        if ($field->hasContraint(Constraints\NotNull::class))
-        {
-          $field->removeContraintByClass(Constraints\NotNull::class);
-        }
-
-        if ($field->hasContraint(Constraints\NotBlank::class))
-        {
-          $field->removeContraintByClass(Constraints\NotBlank::class);
-        }
-        $field->setRequired(false);
-
-        $this->initUploadFileInfos($field, $fieldMapping, $object);
-
-        $field->addOption('setter', function (FileInterface $object, ?UploadedFile $uploadFile = null) use ($field) {
-          $object->setUploadFileByFieldname($field->getFieldname(), $uploadFile);
-        });
-        $field->addOption('getter', function (FileInterface $object) use ($field) {
-          return $object->getUploadFileByFieldname($field->getFieldname());
-        });
-
-        $fieldDeleteAttr = [
-          'autocomplete' => 'off',
-          'data-delete-file' => '',
-        ];
-        if (array_key_exists('data-popin-update-input', $field->getOptions()['attr']))
-        {
-          $fieldDeleteAttr['data-popin-update-input'] = $field->getOptions()['attr']['data-popin-update-input'].'-delete';
-        }
-
-        $formFieldEvent->getFormMapper()->addFieldset('hidden')->setPositionName(Fieldset::POSITION_NONE)->add(Field\SymfonyField::create("{$field->getFieldname()}DeleteFile", HiddenType::class, [
-          'setter' => function (FileInterface $object, $value) use ($field) {
-            $object->setDeleteFileByFieldname($field->getFieldname(), $value);
-          },
-          'getter' => function (FileInterface $object) use ($field) {
-            return $object->getDeleteFileByFieldname($field->getFieldname());
-          },
-          'attr' => $fieldDeleteAttr,
-        ]));
-
-        if ($field->getCropper() || !$fieldMapping->uploadParameters->isRequired)
-        {
-          $formFieldEvent->getFormMapper()->addModal(
-            "popup-editor-{$field->getFieldname()}",
-            $field->getFieldname(),
-            [
-              'button' => [
-                'entitled' => 'actions.picture.edit',
-                'picto' => '',
-                'class' => 'button-action',
-              ],
-              'popin' => [
-                'id' => 'upload',
-                'template' => 'uploadEditor',
-              ],
-            ]
-          );
-        }
-      }
-    }
-  }
-
-  /**
-   * Fills the field with the information of the already uploaded file
-   * (real name, paths, MIME type, size, dimensions), to display it in the form.
-   *
-   * @param UploadField<T>      $field
-   * @param FieldFileMapping<T> $fieldMapping
-   * @param FileInterface       $object
-   *
-   * @return void
-   *
-   * @throws \Exception
-   */
-  protected function initUploadFileInfos(UploadField $field, FieldFileMapping $fieldMapping, FileInterface $object): void
-  {
-    $filePath = $fieldMapping->getObjectFilePath($object);
-    if (!$filePath || !is_file($filePath))
+    $mapper = $event->getMapper();
+    $class = $this->fileClass($mapper);
+    if (null === $class)
     {
       return;
     }
-    $fieldname = $field->getFieldname();
-    $parameters = $field->getUploadFileParameters();
-
-    $isImage = AustralTools::isImage($filePath);
-    $parameters['file']['reelFilename'] = $fieldMapping->getFilename($object, true);
-    $parameters['file']['path'] = [
-      'view' => $isImage ? $this->fileLinkGenerator->image($object, $fieldname, 'original', 'i', 1000, 1000) : null,
-      'original' => $isImage ? $this->fileLinkGenerator->image($object, $fieldname) : null,
-      'download' => $this->fileLinkGenerator->download($object, $fieldname),
-      'absolute' => $filePath,
-    ];
-    $parameters['file']['infos']['mimeType'] = AustralTools::mimeType($filePath);
-    $parameters['file']['infos']['extension'] = AustralTools::extension($filePath);
-    $parameters['file']['infos']['size'] = filesize($filePath) ?: null;
-    $parameters['file']['infos']['sizeHuman'] = AustralTools::humanizeSize($filePath);
-    if ($isImage)
+    $cropperEnabled = false;
+    foreach ($mapper->getFields() as $field)
     {
-      $imageDimension = AustralTools::imageDimension($filePath, true);
-      $aspectRatio = null;
-      if (($imageDimension['width'] ?? 0) > 0 && ($imageDimension['height'] ?? 0) > 0)
+      if (!$field instanceof UploadField || !($fieldMapping = $this->fieldMapping($class, $field)))
       {
-        $aspectRatio = $imageDimension['width'] / $imageDimension['height'];
+        continue;
       }
-      $parameters['file']['infos']['imageSize'] = $imageDimension ? implode(' x ', $imageDimension) : null;
-      $parameters['file']['infos']['imageDimension'] = $imageDimension;
-      $parameters['file']['infos']['aspectRatio'] = $aspectRatio;
+      $this->configureField($mapper, $field, $fieldMapping);
+      $cropperEnabled = $cropperEnabled || [] !== $field->getCropper();
     }
-    $field->setUploadFileParameters($parameters);
+    if ($cropperEnabled && is_a($class, CropperInterface::class, true))
+    {
+      $this->addCropperFields($mapper);
+    }
+  }
+
+  /**
+   * After the guesser: a NotNull from a column that is not nullable would refuse the form when the file is
+   * already uploaded. The required file is checked on submit instead.
+   *
+   * @param FieldBuildEvent $event
+   *
+   * @return void
+   */
+  public function buildField(FieldBuildEvent $event): void
+  {
+    $field = $event->getField();
+    $class = $this->fileClass($event->getMapper());
+    if (!$field instanceof UploadField || null === $class || !$this->fieldMapping($class, $field))
+    {
+      return;
+    }
+    $field->removeConstraint(NotNull::class);
+    $field->removeConstraint(NotBlank::class);
+    $field->setRequired(false);
+    if ($field->hasAutoConstraints())
+    {
+      $field->addConstraint(new Length(max: 255, maxMessage: 'errors.length.max'));
+      $field->addConstraint(new SvgSecurity());
+    }
+  }
+
+  /**
+   * @param FormProcessEvent $event
+   *
+   * @return void
+   * @throws \Exception
+   */
+  public function validate(FormProcessEvent $event): void
+  {
+    $object = $event->getData();
+    if ($object instanceof FileInterface)
+    {
+      $this->fileUploader->validateRequiredFiles($event->getForm(), $object);
+    }
+  }
+
+  /**
+   * @param FormProcessEvent $event
+   *
+   * @return void
+   *
+   * @throws FormUploadException
+   */
+  public function uploads(FormProcessEvent $event): void
+  {
+    $object = $event->getData();
+    if (!$object instanceof FileInterface)
+    {
+      return;
+    }
+    try
+    {
+      $this->fileUploader->uploadFiles($event->getForm(), $object);
+    }
+    catch (\Exception $exception)
+    {
+      throw new FormUploadException($exception->getMessage(), $exception);
+    }
+  }
+
+  /**
+   * Parameters of the upload from the file mapping, unless the Admin class gave them.
+   *
+   * @param FormMapper               $mapper
+   * @param UploadField              $field
+   * @param FieldFileMapping<object> $fieldMapping
+   *
+   * @return void
+   */
+  private function configureField(FormMapper $mapper, UploadField $field, FieldFileMapping $fieldMapping): void
+  {
+    $parameters = $fieldMapping->uploadParameters;
+    if (!$field->getMimeTypes())
+    {
+      $field->setMimeTypes(array_values($parameters->mimeTypes));
+    }
+    $field->setTypeFile($parameters->getTypeFile());
+    if (!$field->hasMaxSize() && $parameters->sizeMax)
+    {
+      $field->setMaxSize($parameters->sizeMax);
+    }
+    if (!$field->hasMaxSizeMessage())
+    {
+      $field->setMaxSizeMessage($parameters->errorMaxSize);
+    }
+    if (!$field->hasMimeTypesMessage())
+    {
+      $field->setMimeTypesMessage($parameters->errorMimeTypes);
+    }
+    if (!$field->getCropper() && $fieldMapping->croppers)
+    {
+      $croppers = [];
+      foreach ($fieldMapping->croppers->croppers as $cropper)
+      {
+        $croppers[$cropper->key] = ['key' => $cropper->key, 'name' => $cropper->name, 'ratio' => $cropper->ratio, 'picto' => $cropper->picto];
+      }
+      $field->setCropper($croppers);
+    }
+    if (!$field->hasImageSizes() && $fieldMapping->imageSize && $fieldMapping->imageSize->hasLimit())
+    {
+      $imageSize = $fieldMapping->imageSize;
+      $field->setImageSizes([
+        'min_width' => null !== $imageSize->widthMin ? (int) $imageSize->widthMin : null,
+        'max_width' => null !== $imageSize->widthMax ? (int) $imageSize->widthMax : null,
+        'min_height' => null !== $imageSize->heightMin ? (int) $imageSize->heightMin : null,
+        'max_height' => null !== $imageSize->heightMax ? (int) $imageSize->heightMax : null,
+      ]);
+    }
+
+    $name = $field->getName();
+    $field->setOptions([
+      'required' => false,
+      'setter' => static function (FileInterface $object, ?UploadedFile $uploadedFile = null) use ($name): void {
+        $object->setUploadFileByFieldname($name, $uploadedFile);
+      },
+      'getter' => static fn (FileInterface $object): mixed => $object->getUploadFileByFieldname($name),
+    ]);
+
+    $deleteAttr = ['autocomplete' => 'off', 'data-delete-file' => ''];
+    $attr = $field->getOption('attr');
+    if (\is_array($attr) && isset($attr['data-popin-update-input']))
+    {
+      $deleteAttr['data-popin-update-input'] = $attr['data-popin-update-input'].'-delete';
+    }
+    $this->hiddenFieldset($mapper)->add(SymfonyField::create("{$name}DeleteFile", HiddenType::class, [
+      'setter' => static function (FileInterface $object, mixed $value) use ($name): void {
+        $object->setDeleteFileByFieldname($name, $value);
+      },
+      'getter' => static fn (FileInterface $object): mixed => $object->getDeleteFileByFieldname($name),
+      'attr' => $deleteAttr,
+    ]));
+
+    if ($field->getCropper() || !$parameters->isRequired)
+    {
+      $mapper->addModal("popup-editor-{$name}", $name, [
+        'button' => ['label' => 'actions.picture.edit', 'picto' => '', 'class' => 'button-action'],
+        'modal' => ['template' => 'uploadEditor'],
+      ]);
+    }
+  }
+
+  /**
+   * @param FormMapper $mapper
+   *
+   * @return void
+   */
+  private function addCropperFields(FormMapper $mapper): void
+  {
+    $this->hiddenFieldset($mapper)
+      ->add(SymfonyField::create('cropperData', HiddenType::class, [
+        'setter' => static function (CropperInterface $object, mixed $value): void {
+          $object->setCropperData(\is_string($value) && '' !== $value ? (array) json_decode($value, true) : []);
+        },
+        'getter' => static fn (CropperInterface $object): string => (string) json_encode($object->getCropperData()),
+        'attr' => ['data-cropper-data' => '', 'autocomplete' => 'off'],
+      ]))
+      ->add(SymfonyField::create('generateCropperByKey', HiddenType::class, [
+        'setter' => static function (CropperInterface $object, mixed $value): void {
+          $object->setGenerateCropperByKey((array) json_decode(\is_string($value) && '' !== $value ? $value : '[]', true));
+        },
+        'getter' => static fn (CropperInterface $object): string => (string) json_encode($object->getGenerateCropperByKey()),
+        'attr' => ['data-cropper-key-generate' => '', 'autocomplete' => 'off'],
+      ]));
+  }
+
+  /**
+   * @param FormMapper $mapper
+   *
+   * @return Fieldset
+   */
+  private function hiddenFieldset(FormMapper $mapper): Fieldset
+  {
+    return $mapper->addFieldset(self::HIDDEN_FIELDSET, false, Fieldset::POSITION_NONE);
+  }
+
+  /**
+   * Class of the data of the form when it handles files (FileInterface), null otherwise.
+   *
+   * @param FormMapper $mapper
+   *
+   * @return string|null
+   */
+  private function fileClass(FormMapper $mapper): ?string
+  {
+    $object = $mapper->getObject();
+    $class = $object instanceof FileInterface ? $object->getClassnameForMapping() : $mapper->getDataClass();
+
+    return null !== $class && is_a($class, FileInterface::class, true) ? $class : null;
+  }
+
+  /**
+   * @param string $class
+   * @param UploadField $field
+   *
+   * @return FieldFileMapping<object>|null
+   * @throws \Throwable
+   */
+  private function fieldMapping(string $class, UploadField $field): ?FieldFileMapping
+  {
+    $fieldMapping = $this->mapping->getFieldsMappingByFieldname($class, FieldFileMapping::class, $field->getName());
+
+    return $fieldMapping instanceof FieldFileMapping ? $fieldMapping : null;
   }
 }

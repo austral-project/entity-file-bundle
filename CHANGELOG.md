@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `composer-require-checker.json`: symbols of the optional bundles used by `src/Bridge/` are whitelisted.
 - `tests/DependencyInjection/ContainerTest.php`: compiles the container with and without the bridges, creates every service and checks the public aliases, the command, the controller and the Twig names.
 - Unit tests for the path parameters of `EntityMappingListener`.
+- `Bridge\Form\Extension\UploadFileTypeExtension`: describes the uploaded file (real name, paths, MIME type, size, image dimensions) in `form.vars.austral.widget.file` of an `UploadField`, for each form view.
+- Tests of the bridge with form-bundle (`tests/Bridge/Form`) and of `FileUploader::validateRequiredFiles()`. `src/Bridge/Form` is analysed by PHPStan again.
 
 ### Changed
 
@@ -24,6 +26,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
   - `Listener\ConfigurationCheckerListener` → `Bridge\Admin\Listener\ConfigurationCheckerListener`.
 
   Their service ids are now `Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener` and `Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener` (see the services entry below).
+- **BREAKING** `Bridge\Form\Listener\UploadFormListener` is rewritten for form-bundle 4 and is final. It listens to `austral.form.configure_after` (`configure()`, was `formAddAutoFields()` on `austral.event.form.add_auto_fields_after`), `austral.form.field.build` (`buildField()`, was `fieldConfiguration()` on `austral.event.form.field.configuration`), `austral.form.submit` (`validate()`) and `austral.form.save_before` (`uploads()`). Its constructor only receives `FileUploader` and `Mapping`. Each entry of a collection is handled with its own form and object: the listener no longer walks the collections.
+- The upload fields are configured from the file mapping when the mapper is configured (`FormMapperFactory`), with the hidden fields (`<field>DeleteFile`, `cropperData`, `generateCropperByKey`) and the editor modal. The `File` and `Image` constraints are computed by `UploadField` from its options; the bridge adds `Length` and `SvgSecurity` and removes the `NotNull` / `NotBlank` of the field (the required file is checked on submit).
 - The bridge services (`Resources/config/bridge/form.yaml` and `bridge/admin.yaml`) are loaded when `AustralFormBundle` / `AustralAdminBundle` is registered in the kernel (`kernel.bundles`), instead of reading `config/bundles.php`.
 - `Cropper::$picto` is optional (`?string`).
 - **BREAKING** Services are defined explicitly (no autowiring, no autoconfiguration). Service ids named after a class (`Austral\EntityFileBundle\…`) are private: use the public `austral.entity_file.*` aliases to get a service from the container. Autowiring a class of the bundle in an application still works.
@@ -41,6 +45,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - The getters of `EntityFileCropperTranslateMasterTrait` no longer fail when the entity has no current translation: they return an empty array, and reading never creates a translation.
 - `Compression` no longer builds the compression command by concatenation: the paths and the options are escaped by Symfony Process.
+- `FileUploader::validateRequiredFiles()` no longer throws when a required file field is not in the form (a field that is not visible for the user).
+- In a collection, each entry describes its own uploaded file (in 3.x, the information came from the object of the mapper).
+- An image size limit given for one dimension only no longer adds a limit of `0` to the other ones.
 
 ### Removed
 

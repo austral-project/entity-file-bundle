@@ -92,6 +92,24 @@ The integrations with optional bundles are grouped by target bundle in `src/Brid
 
 Their service ids change too (see "Services: explicit definitions, private class ids"). Only a class that extends one of these listeners, references it by its class name, or decorates its 3.1 service id, must be updated.
 
+### Upload fields in Austral forms (form-bundle 4)
+
+The bridge with form-bundle requires `austral/form-bundle` `^4.0` and follows its new API (see the UPGRADE-4.0 of form-bundle):
+
+| 3.1 | 4.0 |
+|-----|-----|
+| `formAddAutoFields()` on `austral.event.form.add_auto_fields_after` | `configure()` on `austral.form.configure_after` |
+| `fieldConfiguration()` on `austral.event.form.field.configuration` | `buildField()` on `austral.form.field.build` |
+| `validate()` on `austral.event.form.validate` | `validate()` on `austral.form.submit` |
+| `uploads()` on `austral.event.form.update_before` | `uploads()` on `austral.form.save_before` |
+| constructor: `FileUploader`, `UploadsConfiguration`, `CropperConfiguration`, `Generator`, `Mapping` | constructor: `FileUploader`, `Mapping` |
+| `UploadField::getUploadFileParameters()['file']` (`reelFilename`, `infos.mimeType`…) filled by the listener | `form.vars.austral.widget.file` (`reel_filename`, `infos.mime_type`…) filled by `UploadFileTypeExtension` for each view |
+
+- The upload fields are configured, and the hidden fields and the editor modal are added, when the mapper is created by `FormMapperFactory` (`austral.form.mapper_factory`): a form built from a mapper created with `new FormMapper()` gets the constraints but not the hidden fields.
+- The editor modal is `popup-editor-<field>` with the template `uploadEditor` (option `modal.template`); the `popin.id` option no longer exists.
+- `FormUploadException` is still thrown when an upload fails; the form status `exception` no longer exists.
+- In the templates, read the description of the current file in `form.vars.austral.widget.file` instead of `field.uploadFileParameters.file`.
+
 ### Services: explicit definitions, private class ids
 
 The services of the bundle are no longer autowired nor autoconfigured: each one is defined with its arguments and tags. As a result, the service ids named after a class are **private**. The `austral.entity_file.*` aliases below are public, and they are the supported way to get a service from the container.

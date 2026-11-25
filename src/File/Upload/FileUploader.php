@@ -104,7 +104,8 @@ class FileUploader
     {
       if ($fieldFileMapping->uploadParameters->isRequired && !$fieldFileMapping->getObjectFilePath($object))
       {
-        if ($fieldFileMapping->getFieldname() && (!array_key_exists($fieldFileMapping->getFieldname(), $uploadedFiles) || !($uploadedFiles[$fieldFileMapping->getFieldname()] instanceof UploadedFile)))
+        // A file field that is not in this form (not visible for the user, or not declared) cannot be filled here.
+        if ($fieldFileMapping->getFieldname() && $form->has($fieldFileMapping->getFieldname()) && (!array_key_exists($fieldFileMapping->getFieldname(), $uploadedFiles) || !($uploadedFiles[$fieldFileMapping->getFieldname()] instanceof UploadedFile)))
         {
           $requiredFileSuccess = false;
           $form->get($fieldFileMapping->getFieldname())->addError(new FormError('required'));
