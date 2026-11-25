@@ -75,12 +75,12 @@ final class UploadsConfigurationTest extends TestCase
   {
     $container = new ContainerBuilder();
     $container->setParameter('kernel.bundles', []);
-    (new AustralEntityFileExtension())->load([$config], $container);
+    new AustralEntityFileExtension()->load([$config], $container);
     foreach ($bundleParameters as $name => $value)
     {
       $container->setParameter($name, $value);
     }
-    (new EntityFileCompiler())->process($container);
+    new EntityFileCompiler()->process($container);
 
     /** @var array<string, array<string, mixed>> $uploads */
     $uploads = $container->getParameter('austral_entity_file.uploads');
