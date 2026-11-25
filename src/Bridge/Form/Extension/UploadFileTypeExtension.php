@@ -83,8 +83,6 @@ final class UploadFileTypeExtension extends AbstractTypeExtension
    * @param FieldFileMapping<object> $fieldMapping
    *
    * @return array<string, mixed>|null
-   *
-   * @throws \Exception
    */
   private function describe(FileInterface $object, string $fieldname, FieldFileMapping $fieldMapping): ?array
   {

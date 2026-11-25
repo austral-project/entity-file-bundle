@@ -11,7 +11,7 @@
 
 namespace Austral\EntityFileBundle\DependencyInjection\Compiler;
 
-use Austral\ToolsBundle\AustralTools;
+use Austral\EntityFileBundle\DependencyInjection\ConfigurationMerger;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -53,12 +53,14 @@ class EntityFileCompiler implements CompilerPassInterface
         {
           foreach ($australAdminModules as $moduleKey => $australAdminModule)
           {
-            $bundlesModules[$moduleKey] = array_merge_recursive(AustralTools::valueByKey($bundlesModules, $moduleKey, []), $australAdminModule);
+            $bundlesModules[$moduleKey] = \is_array($australAdminModule)
+              ? ConfigurationMerger::merge(\is_array($bundlesModules[$moduleKey] ?? null) ? $bundlesModules[$moduleKey] : [], $australAdminModule)
+              : $australAdminModule;
           }
           $container->getParameterBag()->remove($keyParameters);
         }
       }
-      $container->setParameter("austral_entity_file.{$keyParameter}", array_replace_recursive($bundlesModules, $initialConfig));
+      $container->setParameter("austral_entity_file.{$keyParameter}", ConfigurationMerger::merge($bundlesModules, $initialConfig));
     }
   }
 }

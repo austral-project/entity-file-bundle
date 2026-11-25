@@ -1,6 +1,6 @@
 services:
 
-  ##### Listener
+##### Listener
   Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener:
     arguments:
       $fileUploader:  '@austral.entity_file.uploader'
@@ -14,7 +14,7 @@ services:
   austral.entity_file.bridge.form.upload.listener:
     alias:  Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener
 
-  ##### Form type extension: description of the uploaded file
+##### Form type extension: description of the uploaded file
   Austral\EntityFileBundle\Bridge\Form\Extension\UploadFileTypeExtension:
     arguments:
       $mapping:           '@austral.entity.mapping'

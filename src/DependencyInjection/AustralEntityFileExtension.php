@@ -35,11 +35,11 @@ class AustralEntityFileExtension extends Extension
     $configuration = new Configuration();
     $config = $this->processConfiguration($configuration, $configs);
 
-    $config['uploads'] = array_replace_recursive($configuration->getUploadsDefault(), $config['uploads']);
-    $config['image_size'] = array_replace_recursive($configuration->getImageSizeDefault(), $config['image_size']);
+    $config['uploads'] = ConfigurationMerger::merge($configuration->getUploadsDefault(), $config['uploads']);
+    $config['image_size'] = ConfigurationMerger::merge($configuration->getImageSizeDefault(), $config['image_size']);
     if ($config['cropper'])
     {
-      $config['cropper'] = array_replace_recursive($configuration->getCropperDefault(), $config['cropper']);
+      $config['cropper'] = ConfigurationMerger::merge($configuration->getCropperDefault(), $config['cropper']);
     }
 
     $container->setParameter('austral_entity_file.uploads', $config['uploads']);

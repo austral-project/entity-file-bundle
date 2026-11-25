@@ -57,8 +57,10 @@ final class UploadFormListener
    * @param FileUploader<object> $fileUploader
    * @param Mapping<object>      $mapping
    */
-  public function __construct(private readonly FileUploader $fileUploader, private readonly Mapping $mapping)
-  {
+  public function __construct(
+    private readonly FileUploader $fileUploader,
+    private readonly Mapping $mapping,
+  ) {
   }
 
   /**
@@ -120,8 +122,6 @@ final class UploadFormListener
    * @param FormProcessEvent $event
    *
    * @return void
-   *
-   * @throws \Exception
    */
   public function validate(FormProcessEvent $event): void
   {
@@ -291,8 +291,6 @@ final class UploadFormListener
    * @param UploadField $field
    *
    * @return FieldFileMapping<object>|null
-   *
-   * @throws \Throwable
    */
   private function fieldMapping(string $class, UploadField $field): ?FieldFileMapping
   {

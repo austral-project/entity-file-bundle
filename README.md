@@ -35,8 +35,33 @@ return [
 ```yaml
 # config/packages/austral_entity_file.yaml
 austral_entity_file:
-    # ...
+    compression:
+        command: ''                 # command that compresses the uploaded images; none when not set
+        options:
+            webp:       { quality: 70 }
+    cropper:                        # merged with the default croppers: desktop, tablet, mobile
+        desktop:    { name: desktop, picto: austral-picto-monitor, ratio: '16/9' }
+    image_size:                     # merged with the default sizes (default: 100 to 10000 pixels)
+        default:
+            width:  { min: 100, max: 10000 }
+            height: { min: 100, max: 10000 }
+    uploads:                        # merged with the default rules: default_image, default_file (2M)
+        default_image:
+            size:       { max: '5M' }
+            mimeTypes:  [ 'image/jpeg', 'image/png', 'image/webp' ]
 ```
+
+The configuration of the application is merged with the default values, then with the values declared by the
+bundles (the avatar of security-bundle, for example): a list (`mimeTypes`, `croppers`) replaces the list it
+overrides, and a value that is not set keeps the default one.
+
+```yaml
+# config/routes/austral_entity_file.yaml: thumbnails and downloads
+austral_entity_file:
+    resource: '@AustralEntityFileBundle/Resources/config/routes.yaml'
+```
+
+With the [Austral recipes](https://github.com/austral-project/recipes), Flex creates both files.
 
 ## Usage
 

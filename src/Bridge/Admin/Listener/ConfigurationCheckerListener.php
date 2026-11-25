@@ -57,7 +57,7 @@ class ConfigurationCheckerListener
       ->setDescription('configuration.check.uploads.description');
 
     $this->createConfigurationByKeyConfigDefault($configurationCheckerUploads, 'default_image', $this->uploadsConfiguration->getConfig('default_image'));
-    $this->createConfigurationByKeyConfigDefault($configurationCheckerUploads, 'default_file', $this->uploadsConfiguration->getConfig('default_image'));
+    $this->createConfigurationByKeyConfigDefault($configurationCheckerUploads, 'default_file', $this->uploadsConfiguration->getConfig('default_file'));
 
     /**
      * @var EntityMapping<T> $entityMapping

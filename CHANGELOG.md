@@ -48,8 +48,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `FileUploader::validateRequiredFiles()` no longer throws when a required file field is not in the form (a field that is not visible for the user).
 - In a collection, each entry describes its own uploaded file (in 3.x, the information came from the object of the mapper).
 - An image size limit given for one dimension only no longer adds a limit of `0` to the other ones.
+- The configuration is merged with `ConfigurationMerger` instead of `array_replace_recursive()` and `array_merge_recursive()`: a list (`mimeTypes`, `croppers`) given by the application replaces the default list (in 3.x, it only replaced its first items: `[image/webp]` gave `[image/webp, image/jpeg, image/png…]`), and two bundles that declare the same upload no longer turn its values into lists.
+- The configuration checker of the admin showed the rules of `default_image` for `default_file`.
 
 ### Removed
+
+- The skeleton `Resources/config/squelette/austral_entity_file.yaml`: it no longer matched the configuration (`uploads.default.image` and `cropper` are refused by Symfony). The [Austral recipe](https://github.com/austral-project/recipes) creates `config/packages/austral_entity_file.yaml` and `config/routes/austral_entity_file.yaml`.
 
 - **BREAKING** `Austral\EntityFileBundle\Entity\Interfaces\FileInterface` and `CropperInterface`: use `Austral\Contracts\File\FileInterface` and `Austral\Contracts\File\CropperInterface` (austral/contracts), without alias.
 

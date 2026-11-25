@@ -187,6 +187,15 @@ Rename the `use` inside the class as well.
 
 Reading a cropper value (`getCropperData()`, `getCropperDataByFilename()`, `getGenerateCropperByKey()`) never creates a translation: without a current translation, it returns an empty array. Writing a value (`setCropperData()`, `setGenerateCropperByKey()`) creates the current translation when needed, and throws a `\LogicException` when the translation class does not implement `CropperInterface`.
 
+### Configuration of the uploads
+
+A list given by the application replaces the default list instead of its first items. Check the `mimeTypes` and
+`croppers` of `config/packages/austral_entity_file.yaml`: in 3.x, `mimeTypes: [image/webp]` on `default_image`
+still accepted `image/jpeg`, `image/png`…; in 4.0, only `image/webp`. List every type you accept.
+
+The skeleton `Resources/config/squelette/austral_entity_file.yaml` is removed (its keys `uploads.default.image` and
+`cropper` were refused). See the README for the configuration.
+
 ### Updating a project
 
 ```bash
