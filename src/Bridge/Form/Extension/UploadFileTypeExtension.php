@@ -78,11 +78,12 @@ final class UploadFileTypeExtension extends AbstractTypeExtension
   /**
    * Same structure as the option "file" of UploadField, null when the object has no file.
    *
-   * @param FileInterface<object> $object
-   * @param string $fieldname
+   * @param FileInterface<object>    $object
+   * @param string                   $fieldname
    * @param FieldFileMapping<object> $fieldMapping
    *
    * @return array<string, mixed>|null
+   *
    * @throws \Exception
    */
   private function describe(FileInterface $object, string $fieldname, FieldFileMapping $fieldMapping): ?array

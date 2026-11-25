@@ -149,7 +149,7 @@ final class UploadFormListenerTest extends TestCase
 
   public function testOtherFormsAreLeftAlone(): void
   {
-    $mapper = (new FormMapperFactory($this->dispatcher))->create('form_austral', \stdClass::class, null, static function (FormMapper $mapper): void {
+    $mapper = new FormMapperFactory($this->dispatcher)->create('form_austral', \stdClass::class, null, static function (FormMapper $mapper): void {
       $mapper->add(UploadField::create('image'));
     });
 
@@ -192,7 +192,7 @@ final class UploadFormListenerTest extends TestCase
     $this->fileUploader->expects(self::once())->method('validateRequiredFiles')->with($form, $object)->willReturn(true);
     $this->fileUploader->expects(self::once())->method('uploadFiles')->with($form, $object)->willReturnSelf();
 
-    $result = (new FormHandler($this->dispatcher))->process($form, Request::create('/', 'POST', ['form_austral' => ['title' => 'A']]), static function (): void {
+    $result = new FormHandler($this->dispatcher)->process($form, Request::create('/', 'POST', ['form_austral' => ['title' => 'A']]), static function (): void {
     });
 
     self::assertTrue($result->isSaved());
@@ -209,7 +209,7 @@ final class UploadFormListenerTest extends TestCase
     $this->expectException(FormUploadException::class);
     $this->expectExceptionMessage('Disk full');
 
-    (new FormHandler($this->dispatcher))->process($form, Request::create('/', 'POST', ['form_austral' => ['title' => 'A']]), static function (): void {
+    new FormHandler($this->dispatcher)->process($form, Request::create('/', 'POST', ['form_austral' => ['title' => 'A']]), static function (): void {
     });
   }
 
@@ -224,7 +224,7 @@ final class UploadFormListenerTest extends TestCase
   {
     $this->imageMapping = $fieldMapping;
 
-    return (new FormMapperFactory($this->dispatcher))->create('form_austral', FileEntity::class, $object, static function (FormMapper $mapper) use ($field): void {
+    return new FormMapperFactory($this->dispatcher)->create('form_austral', FileEntity::class, $object, static function (FormMapper $mapper) use ($field): void {
       $mapper->addFieldset('main')
         ->add(TextField::create('title', ['mapped' => false]))
         ->add($field);

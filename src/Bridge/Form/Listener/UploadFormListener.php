@@ -120,6 +120,7 @@ final class UploadFormListener
    * @param FormProcessEvent $event
    *
    * @return void
+   *
    * @throws \Exception
    */
   public function validate(FormProcessEvent $event): void
@@ -286,10 +287,11 @@ final class UploadFormListener
   }
 
   /**
-   * @param string $class
+   * @param string      $class
    * @param UploadField $field
    *
    * @return FieldFileMapping<object>|null
+   *
    * @throws \Throwable
    */
   private function fieldMapping(string $class, UploadField $field): ?FieldFileMapping

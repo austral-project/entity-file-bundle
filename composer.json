@@ -45,6 +45,7 @@
     "twig/twig": "^3.21"
   },
   "require-dev": {
+    "austral/form-bundle": "^4.0",
     "friendsofphp/php-cs-fixer": "^3.64",
     "phpstan/phpstan": "^2.0",
     "phpstan/phpstan-symfony": "^2.0",
