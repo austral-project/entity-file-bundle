@@ -50,6 +50,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - An image size limit given for one dimension only no longer adds a limit of `0` to the other ones.
 - The configuration is merged with `ConfigurationMerger` instead of `array_replace_recursive()` and `array_merge_recursive()`: a list (`mimeTypes`, `croppers`) given by the application replaces the default list (in 3.x, it only replaced its first items: `[image/webp]` gave `[image/webp, image/jpeg, image/png…]`), and two bundles that declare the same upload no longer turn its values into lists.
 - The configuration checker of the admin showed the rules of `default_image` for `default_file`.
+- The link generator (`austral.entity_file.link.generator`) read a `%locale%` parameter that a Symfony application does not define: the container could not be compiled (« You have requested a non-existent parameter "locale" »). It reads `%kernel.default_locale%` (`framework.default_locale`).
 
 ### Removed
 

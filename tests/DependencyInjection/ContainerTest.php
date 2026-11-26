@@ -266,7 +266,7 @@ final class ContainerTest extends TestCase
     $container = new ContainerBuilder();
     $container->setParameter('kernel.project_dir', sys_get_temp_dir());
     $container->setParameter('kernel.bundles', $withBridges ? self::BRIDGED_BUNDLES : []);
-    $container->setParameter('locale', 'en');
+    $container->setParameter('kernel.default_locale', 'en');
     $container->setDefinition('event_dispatcher', new Definition(EventDispatcher::class));
     $container->setDefinition('parameter_bag', new Definition(ContainerBag::class, [new Reference('service_container')]));
     $container->setDefinition('austral.entity.mapping', new Definition(Mapping::class)->setSynthetic(true)->setPublic(true));

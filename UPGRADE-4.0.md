@@ -187,6 +187,10 @@ Rename the `use` inside the class as well.
 
 Reading a cropper value (`getCropperData()`, `getCropperDataByFilename()`, `getGenerateCropperByKey()`) never creates a translation: without a current translation, it returns an empty array. Writing a value (`setCropperData()`, `setGenerateCropperByKey()`) creates the current translation when needed, and throws a `\LogicException` when the translation class does not implement `CropperInterface`.
 
+### Default locale of the file links
+
+The link generator uses `framework.default_locale` (`%kernel.default_locale%`) instead of a `locale` parameter of the application. A project that defined `parameters.locale` only for Austral can remove it and set `framework.default_locale`.
+
 ### Configuration of the uploads
 
 A list given by the application replaces the default list instead of its first items. Check the `mimeTypes` and

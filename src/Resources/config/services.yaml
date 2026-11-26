@@ -112,7 +112,7 @@ services:
     arguments:
       $router:            '@router'
       $mapping:           '@austral.entity.mapping'
-      $defaultLocale:     '%locale%'
+      $defaultLocale:     '%kernel.default_locale%'
 
   austral.entity_file.link.generator:
     alias:    Austral\EntityFileBundle\File\Link\Generator
