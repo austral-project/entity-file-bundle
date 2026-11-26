@@ -12,7 +12,7 @@
 namespace Austral\EntityFileBundle\Tests\DependencyInjection;
 
 use Austral\EntityBundle\Mapping\Mapping;
-use Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener;
+use Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckListener;
 use Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener;
 use Austral\EntityFileBundle\Command\CompressCommand;
 use Austral\EntityFileBundle\Controller\FileController;
@@ -109,9 +109,13 @@ final class ContainerTest extends TestCase
     $withBridges = self::loadExtension(withBridges: true);
 
     self::assertFalse($withoutBridges->hasDefinition(UploadFormListener::class));
-    self::assertFalse($withoutBridges->hasDefinition(ConfigurationCheckerListener::class));
+    self::assertFalse($withoutBridges->hasDefinition(ConfigurationCheckListener::class));
     self::assertTrue($withBridges->hasDefinition(UploadFormListener::class));
-    self::assertTrue($withBridges->hasDefinition(ConfigurationCheckerListener::class));
+    self::assertTrue($withBridges->hasDefinition(ConfigurationCheckListener::class));
+    self::assertSame(
+      [['event' => 'austral.admin.configuration_check', 'method' => 'configurationCheck']],
+      $withBridges->getDefinition(ConfigurationCheckListener::class)->getTag('kernel.event_listener')
+    );
   }
 
   public function testOnlyTheAustralAliasesArePublic(): void

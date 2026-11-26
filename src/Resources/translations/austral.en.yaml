@@ -52,31 +52,13 @@ cropper:
 
 
 configuration:
+  categories:
+    uploads:                                    Uploads
   check:
     uploads:
-      title:                                    Uploads configuration
-      description:                              Check configuration to uploads file for the Entity
-      fieldname:                                Fieldname
       default_image:
-        title:                                  Default parameters for image
+        title:                                  Default rule of the images (default_image)
       default_file:
-        title:                                  Default parameters for fiel
-      path:
-        uploads:
-          entitled:                             Upload path
-        thumbnail:
-          entitled:                             Thumbnail path
-
-      form:
-        fieldname:
-          entitled:                             "Fieldname : %keyname%"
-        size_max:
-          entitled:                             File size max
-        mime_types:
-          entitled:                             Mime types accepted
-          all:                                  Accepted all mime types
-        image:
-          size_min:
-            entitled:                           Min image size
-          size_max:
-            entitled:                           Max image size
+        title:                                  Default rule of the files (default_file)
+      rule:                                     "Maximum size · accepted MIME types · size of the images · upload folder"
+      unrestricted:                             "Without maximum size or accepting every MIME type (*/*): any file can be sent to the public folder. Set size.max and mimeTypes (austral_entity_file.uploads)."

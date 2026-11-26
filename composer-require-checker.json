@@ -1,8 +1,7 @@
 {
   "symbol-whitelist": [
-    "Austral\\AdminBundle\\Configuration\\ConfigurationChecker",
-    "Austral\\AdminBundle\\Configuration\\ConfigurationCheckerValue",
-    "Austral\\AdminBundle\\Event\\ConfigurationCheckerEvent",
+    "Austral\\AdminBundle\\Configuration\\ConfigurationCheck",
+    "Austral\\AdminBundle\\Event\\ConfigurationCheckEvent",
     "Austral\\EntityTranslateBundle\\Entity\\Traits\\EntityTranslateMasterTrait",
     "Austral\\FormBundle\\Event\\FieldBuildEvent",
     "Austral\\FormBundle\\Event\\FormMapperEvent",

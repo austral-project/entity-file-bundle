@@ -1,14 +1,10 @@
+# Services of the bridge with admin-bundle, loaded only when AustralAdminBundle is enabled (AustralEntityFileExtension).
 services:
 
-##### Listener
-  Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener:
-    class:          Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener
+  ##### Listener: category "uploads" of the configuration page
+  Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckListener:
     arguments:
       $mapping:               '@austral.entity.mapping'
       $uploadsConfiguration:  '@austral.entity_file.uploads.config'
-      $cropperConfiguration:  '@austral.entity_file.cropper.config'
     tags:
-      - { name: kernel.event_listener, event: "austral.event.admin.configuration_checker", method: configurationChecker }
-
-  austral.entity_file.bridge.admin.configuration_checker.listener:
-    alias:          Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener
+      - { name: kernel.event_listener, event: austral.admin.configuration_check, method: configurationCheck }

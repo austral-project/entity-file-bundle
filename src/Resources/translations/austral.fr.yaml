@@ -51,31 +51,13 @@ cropper:
     name:                           Mobile
 
 configuration:
+  categories:
+    uploads:                                    Téléchargements
   check:
     uploads:
-      title:                                    Configuration des téléchargements
-      description:                              Vérification de la configuration pour le téléchargement des fichiers des entités
-      fieldname:                                Nom de champ
       default_image:
-        title:                                  Paramètres par défaut pour les images
+        title:                                  Règle par défaut des images (default_image)
       default_file:
-        title:                                  Paramètres par défaut pour les fichiers
-      path:
-        uploads:
-          entitled:                             Chemin de téléchargement
-        thumbnail:
-          entitled:                             Chemin des miniatures
-
-      form:
-        fieldname:
-          entitled:                             "Fieldname : %keyname%"
-        size_max:
-          entitled:                             Taille de fichier maximale
-        mime_types:
-          entitled:                             Types MIME acceptés
-          all:                                  Accepte tous les types mime
-        image:
-          size_min:
-            entitled:                           Image taille minimum
-          size_max:
-            entitled:                           Image taille maximum
+        title:                                  Règle par défaut des fichiers (default_file)
+      rule:                                     "Taille maximale · types MIME acceptés · taille des images · dossier de téléchargement"
+      unrestricted:                             "Sans taille maximale ou acceptant tous les types MIME (*/*) : n'importe quel fichier peut être envoyé dans le dossier public. Renseigner size.max et mimeTypes (austral_entity_file.uploads)."

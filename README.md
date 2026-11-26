@@ -67,6 +67,13 @@ With the [Austral recipes](https://github.com/austral-project/recipes), Flex cre
 
 <!-- Minimal, concrete example. -->
 
+## Administration
+
+When [austral/admin-bundle](https://github.com/austral-project/admin-bundle) 4 is installed, the configuration page of the admin
+(`/austral-admin/status-configuration`) shows the category "Uploads": the rules `default_image` and `default_file`, then each
+file field of the entities, with its maximum size, accepted MIME types, size of the images and upload folder. A rule without
+maximum size or that accepts every MIME type is a warning: set `size.max` and `mimeTypes` in `austral_entity_file.uploads`.
+
 ## Documentation
 
 The full documentation is available at https://austral.dev.

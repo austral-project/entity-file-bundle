@@ -88,7 +88,7 @@ The integrations with optional bundles are grouped by target bundle in `src/Brid
 | 3.1 | 4.0 |
 |-----|-----|
 | `Austral\EntityFileBundle\Listener\UploadFormListener` | `Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener` |
-| `Austral\EntityFileBundle\Listener\ConfigurationCheckerListener` | `Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener` |
+| `Austral\EntityFileBundle\Listener\ConfigurationCheckerListener` | `Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckListener` (admin-bundle 4) |
 
 Their service ids change too (see "Services: explicit definitions, private class ids"). Only a class that extends one of these listeners, references it by its class name, or decorates its 3.1 service id, must be updated.
 
@@ -150,7 +150,7 @@ Injecting a service is not affected: autowiring `Austral\EntityFileBundle\File\U
 | `austral.entity_file.entity_mapping.listener` | `Austral\EntityFileBundle\Listener\EntityMappingListener` |
 | `austral.entity_file.entity_manager.listener` | `Austral\EntityFileBundle\Listener\EntityManagerListener` |
 | `austral.entity_file.form.listener` | `Austral\EntityFileBundle\Bridge\Form\Listener\UploadFormListener` |
-| `austral.entity_file.configuration_checker.listener` | `Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckerListener` |
+| `austral.entity_file.configuration_checker.listener` | `Austral\EntityFileBundle\Bridge\Admin\Listener\ConfigurationCheckListener` |
 
 > **Warning:** a service of your application that decorates one of these listeners by its 3.1 alias (`decorates: austral.entity_file.form.listener`) makes the container compilation fail. Decorate the 4.0 service id instead.
 
